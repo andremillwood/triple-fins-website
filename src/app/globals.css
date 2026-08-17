@@ -1,0 +1,157 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --deep: #0B2E4E;
+  --deep2: #07223A;
+  --ink: #06202F;
+  --aqua: #15D2DB;
+  --aqua-deep: #0F8BBF;
+  --wave: #16B3C9;
+  --sun: #FFB020;
+  --coral: #FF5A5F;
+  --foam: #EAF4F6;
+  --paper: #FFFFFF;
+  --muted: #5D7688;
+  --line: #D8E6EB;
+  --maxw: 1180px;
+  --fin: polygon(0 0, 100% 0, 100% 82%, 50% 100%, 0 82%);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-figtree), system-ui, -apple-system, sans-serif;
+  font-size: 17px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, .disp {
+  font-family: var(--font-saira), sans-serif;
+  margin: 0;
+  line-height: 0.98;
+  letter-spacing: 0.01em;
+}
+
+.wrap {
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: 0 22px;
+}
+
+.eyebrow {
+  font-family: var(--font-saira), sans-serif;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  font-size: 0.82rem;
+  color: var(--aqua-deep);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  border: 0;
+  font-family: var(--font-saira), sans-serif;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 1.02rem;
+  padding: 0.85rem 1.5rem;
+  border-radius: 2px;
+  text-decoration: none;
+  transition: transform 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 10px 100%, 0 calc(100% - 10px));
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+}
+
+.btn-sun {
+  background: var(--sun);
+  color: var(--ink);
+  box-shadow: 0 8px 22px -10px rgba(255, 176, 32, 0.8);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--aqua);
+  border: 2px solid rgba(21, 210, 219, 0.55);
+}
+
+.btn-ghost:hover {
+  background: rgba(21, 210, 219, 0.12);
+}
+
+.btn-deep {
+  background: var(--deep);
+  color: #fff;
+}
+
+.btn-sm {
+  padding: 0.55rem 1rem;
+  font-size: 0.9rem;
+}
+
+:focus-visible {
+  outline: 3px solid var(--sun);
+  outline-offset: 2px;
+}
+
+/* Animations */
+@keyframes drift {
+  0%, 100% {
+    transform: translateX(-4%);
+  }
+  50% {
+    transform: translateX(6%);
+  }
+}
+
+.animate-drift {
+  animation: drift 9s ease-in-out infinite;
+}
+
+.fin-clip {
+  clip-path: var(--fin);
+}
+
+.corner-cut {
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 14px 100%, 0 calc(100% - 14px));
+}
+
+.card-cut {
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 26px 100%, 0 calc(100% - 26px));
+}
+
+/* Scroll reveal classes */
+.reveal {
+  opacity: 0;
+  transform: translateY(22px);
+  transition: opacity 0.55s ease, transform 0.55s ease;
+}
+
+.reveal.in {
+  opacity: 1;
+  transform: translateY(0);
+}
