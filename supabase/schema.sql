@@ -72,24 +72,28 @@ ALTER TABLE public.registrations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.products ENABLE ROW LEVEL SECURITY;
 
 -- Inquiries: Allow anonymous public insertions
+DROP POLICY IF EXISTS "Allow public insert to inquiries" ON public.inquiries;
 CREATE POLICY "Allow public insert to inquiries" 
 ON public.inquiries FOR INSERT 
 TO anon, authenticated 
 WITH CHECK (true);
 
 -- Inquiries: Read allowed only for service_role or authenticated staff
+DROP POLICY IF EXISTS "Allow authenticated read inquiries" ON public.inquiries;
 CREATE POLICY "Allow authenticated read inquiries" 
 ON public.inquiries FOR SELECT 
 TO authenticated 
 USING (true);
 
 -- Registrations: Allow anonymous public insertions
+DROP POLICY IF EXISTS "Allow public insert to registrations" ON public.registrations;
 CREATE POLICY "Allow public insert to registrations" 
 ON public.registrations FOR INSERT 
 TO anon, authenticated 
 WITH CHECK (true);
 
 -- Products: Allow public read access to active products
+DROP POLICY IF EXISTS "Allow public read active products" ON public.products;
 CREATE POLICY "Allow public read active products" 
 ON public.products FOR SELECT 
 TO anon, authenticated 
