@@ -139,4 +139,52 @@ triple-fins-website/
 ```
 
 ---
+## Operational flows
+
+- Program CTAs open the registration form with the chosen program selected.
+- Registrations are validated and persisted before email or payment is attempted.
+- Stripe-hosted Checkout handles configured online payments. The signed webhook at `/api/webhooks/stripe` is the payment source of truth.
+- Bank transfer/manual verification and pay-on-site remain available without Stripe.
+- Merchandise is loaded from the Supabase `products` table. Checkout creates an order and immutable line-item price snapshots after validating current server-side prices.
+- Authorized staff can sign in at `/admin` to review registrations and inquiries and update operational statuses.
+
+## Database migrations and staff setup
+
+Apply migrations with the Supabase CLI (`supabase db push`) or run `supabase/migrations/202609280001_operational_loop.sql` in the SQL editor. The migration adds payment and registration metadata, staff roles, orders, order items, analytics events, indexes, and restrictive RLS policies.
+
+Create a staff user in Supabase Auth, then authorize the user using their UUID:
+
+```sql
+insert into public.staff_roles (user_id, role)
+values ('AUTH_USER_UUID', 'admin');
+```
+
+Authentication alone does not grant customer-record access; the user must have a `staff_roles` row.
+
+## Stripe setup
+
+Stripe is optional for a manual-payment launch. To enable **Pay online**, configure `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, and positive JMD prices for each program in `.env.local`. Prefer a restricted (`rk_`) server key. Do not expose secret keys to the browser.
+
+Create a Stripe webhook endpoint for `https://YOUR_DOMAIN/api/webhooks/stripe` and subscribe to:
+
+- `checkout.session.completed`
+- `checkout.session.async_payment_succeeded`
+- `checkout.session.async_payment_failed`
+
+Checkout uses dynamic payment methods configured in Stripe. Paid fulfillment/status is driven by verified webhook events, never by the success page.
+
+## Order workflow
+
+Customers enter contact details, choose pickup or delivery coordination, and select Stripe, bank transfer, or pay on pickup. Order totals are calculated from active Supabase products on the server. This release intentionally does not add complex inventory management.
+
+## Verification
+
+```bash
+npm install
+npm run test
+npm run typecheck
+npm run lint
+npm run build
+```
+
 *A Point Global Marketing initiative · Swim Strong. Play Hard. Build Champions.*

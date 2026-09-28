@@ -9,6 +9,7 @@ import { About } from '@/components/About';
 import { Contact } from '@/components/Contact';
 import { Footer } from '@/components/Footer';
 import { CartDrawer } from '@/components/CartDrawer';
+import { RegistrationForm } from '@/components/RegistrationForm';
 import { CartItem, Product } from '@/types';
 
 export default function Home() {
@@ -87,6 +88,8 @@ export default function Home() {
 
       {/* Highlights & Training Programs */}
       <Programs />
+
+      <RegistrationForm />
 
       {/* Merchandise Store */}
       <Shop onAddToCart={handleAddToCart} />

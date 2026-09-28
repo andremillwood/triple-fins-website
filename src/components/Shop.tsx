@@ -1,27 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { Product, ProductTier } from '@/types';
-
-export const INITIAL_PRODUCTS: Product[] = [
-  { n: 'Kids Team Tee', cat: 'T-Shirt', tier: 'athlete', p: 2500 },
-  { n: 'Kids Hoodie', cat: 'Hoodie', tier: 'athlete', p: 4800 },
-  { n: 'Rashguard Swim Shirt', cat: 'Swim', tier: 'athlete', p: 3900 },
-  { n: 'Youth Training Jersey', cat: 'Jersey', tier: 'athlete', p: 3600 },
-  { n: 'Kids Drawstring Bag', cat: 'Kit Bag', tier: 'athlete', p: 1800 },
-  { n: 'Supporter Tee', cat: 'T-Shirt', tier: 'supporter', p: 2900 },
-  { n: 'Zip Hoodie', cat: 'Hoodie', tier: 'supporter', p: 5600 },
-  { n: 'Triple Fins Cap', cat: 'Cap', tier: 'supporter', p: 2400 },
-  { n: 'Team Socks', cat: 'Socks', tier: 'supporter', p: 1500 },
-  { n: 'Tote Bag', cat: 'Tote', tier: 'supporter', p: 2000 },
-  { n: 'Swim Cap', cat: 'Swim', tier: 'everyday', p: 1600 },
-  { n: 'Quick-Dry Towel', cat: 'Towel', tier: 'everyday', p: 2600 },
-  { n: 'Water Bottle', cat: 'Bottle', tier: 'everyday', p: 2200 },
-  { n: 'Sticker Pack', cat: 'Stickers', tier: 'everyday', p: 800 },
-  { n: 'Fins Water Shorts', cat: 'Swim', tier: 'everyday', p: 3400 },
-  { n: 'Coach Polo', cat: 'Polo', tier: 'supporter', p: 4200 },
-];
 
 const PALETTE = ['#0B2E4E', '#0F8BBF', '#16B3C9', '#15D2DB', '#FFB020', '#FF5A5F'];
 
@@ -37,8 +18,18 @@ interface ShopProps {
 
 export const Shop: React.FC<ShopProps> = ({ onAddToCart }) => {
   const [activeTier, setActiveTier] = useState<string>('all');
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loadState, setLoadState] = useState<'loading'|'ready'|'error'>('loading');
+  useEffect(() => {
+    fetch('/api/products').then(async (response) => {
+      const result = await response.json();
+      if (!response.ok || !result.success) throw new Error();
+      setProducts(result.data.map((p: { id: string; name: string; category: string; tier: ProductTier; price_jmd: number|string; image_url?: string }) => ({ id: p.id, n: p.name, cat: p.category, tier: p.tier, p: Number(p.price_jmd), image: p.image_url })));
+      setLoadState('ready');
+    }).catch(() => setLoadState('error'));
+  }, []);
 
-  const filteredProducts = INITIAL_PRODUCTS.map((prod, index) => ({
+  const filteredProducts = products.map((prod, index) => ({
     ...prod,
     originalIndex: index,
   })).filter((prod) => (activeTier === 'all' ? true : prod.tier === activeTier));
@@ -87,6 +78,9 @@ export const Shop: React.FC<ShopProps> = ({ onAddToCart }) => {
         </div>
 
         {/* Product Grid */}
+        {loadState === 'loading' && <p className="p-6 bg-foam text-muted">Loading the current merchandise catalogue…</p>}
+        {loadState === 'error' && <p className="p-6 bg-rose-50 text-rose-800">The store could not load. Please refresh or contact us.</p>}
+        {loadState === 'ready' && products.length === 0 && <p className="p-6 bg-foam text-muted">No merchandise is available right now.</p>}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {filteredProducts.map((p) => {
             const colorBg = PALETTE[p.originalIndex % PALETTE.length];
@@ -94,7 +88,7 @@ export const Shop: React.FC<ShopProps> = ({ onAddToCart }) => {
 
             return (
               <div
-                key={p.originalIndex}
+                key={p.id || p.originalIndex}
                 className="bg-white border border-line flex flex-col justify-between corner-cut transition-all duration-200 hover:-translate-y-1 hover:shadow-lg group"
               >
                 {/* Tile Visual */}
