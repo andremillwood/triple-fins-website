@@ -21,7 +21,8 @@ export default function Home() {
     try {
       const saved = localStorage.getItem('tf_cart');
       if (saved) {
-        setCart(JSON.parse(saved));
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) setCart(parsed.filter((item) => item.product?.id && Number.isInteger(item.quantity) && item.quantity > 0).map((item) => ({ ...item, index: item.product.id })));
       }
     } catch {
       // ignore
@@ -38,7 +39,9 @@ export default function Home() {
     }
   };
 
-  const handleAddToCart = (index: number, product: Product) => {
+  const handleAddToCart = (_index: number, product: Product) => {
+    if (!product.id) return;
+    const index = product.id;
     const existingIndex = cart.findIndex((item) => item.index === index);
     let updated: CartItem[];
 
@@ -54,7 +57,7 @@ export default function Home() {
     setIsCartOpen(true);
   };
 
-  const handleUpdateQuantity = (index: number, delta: number) => {
+  const handleUpdateQuantity = (index: string, delta: number) => {
     const updated = cart
       .map((item) => {
         if (item.index === index) {
@@ -68,7 +71,7 @@ export default function Home() {
     updateCartState(updated);
   };
 
-  const handleRemoveItem = (index: number) => {
+  const handleRemoveItem = (index: string) => {
     const updated = cart.filter((item) => item.index !== index);
     updateCartState(updated);
   };

@@ -8,8 +8,8 @@ interface CartDrawerProps {
   isOpen: boolean;
   onClose: () => void;
   cart: CartItem[];
-  onUpdateQuantity: (index: number, delta: number) => void;
-  onRemoveItem: (index: number) => void;
+  onUpdateQuantity: (index: string, delta: number) => void;
+  onRemoveItem: (index: string) => void;
 }
 
 export const CartDrawer: React.FC<CartDrawerProps> = ({

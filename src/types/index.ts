@@ -7,10 +7,13 @@ export interface Product {
   tier: ProductTier;
   p: number; // price in JMD
   image?: string;
+  images?: string[];
+  description?: string;
+  provisional?: boolean;
 }
 
 export interface CartItem {
-  index: number;
+  index: string;
   product: Product;
   quantity: number;
 }

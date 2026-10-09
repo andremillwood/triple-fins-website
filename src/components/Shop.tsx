@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { Product, ProductTier } from '@/types';
+import { ProductGallery } from './ProductGallery';
 
 const PALETTE = ['#0B2E4E', '#0F8BBF', '#16B3C9', '#15D2DB', '#FFB020', '#FF5A5F'];
 
@@ -24,7 +25,7 @@ export const Shop: React.FC<ShopProps> = ({ onAddToCart }) => {
     fetch('/api/products').then(async (response) => {
       const result = await response.json();
       if (!response.ok || !result.success) throw new Error();
-      setProducts(result.data.map((p: { id: string; name: string; category: string; tier: ProductTier; price_jmd: number|string; image_url?: string }) => ({ id: p.id, n: p.name, cat: p.category, tier: p.tier, p: Number(p.price_jmd), image: p.image_url })));
+      setProducts(result.data.map((p: { id: string; name: string; category: string; tier: ProductTier; price_jmd: number|string; image_url?: string; image_urls?: string[]; description?: string; price_is_provisional?: boolean }) => ({ id: p.id, n: p.name, cat: p.category, tier: p.tier, p: Number(p.price_jmd), image: p.image_url, images: p.image_urls?.length ? p.image_urls : p.image_url ? [p.image_url] : [], description: p.description, provisional: p.price_is_provisional })));
       setLoadState('ready');
     }).catch(() => setLoadState('error'));
   }, []);
@@ -91,6 +92,7 @@ export const Shop: React.FC<ShopProps> = ({ onAddToCart }) => {
                 key={p.id || p.originalIndex}
                 className="bg-white border border-line flex flex-col justify-between corner-cut transition-all duration-200 hover:-translate-y-1 hover:shadow-lg group"
               >
+                {p.images?.length ? <ProductGallery name={p.n} images={p.images} /> : <>
                 {/* Tile Visual */}
                 <div
                   className="relative aspect-square flex items-center justify-center p-8 transition-transform group-hover:scale-[1.02]"
@@ -112,6 +114,7 @@ export const Shop: React.FC<ShopProps> = ({ onAddToCart }) => {
                     className="w-2/5 h-auto opacity-80 drop-shadow-md"
                   />
                 </div>
+                </>}
 
                 {/* Details */}
                 <div className="p-5 flex flex-col flex-1 justify-between">
@@ -119,9 +122,11 @@ export const Shop: React.FC<ShopProps> = ({ onAddToCart }) => {
                     <span className="font-display font-semibold text-xs text-muted uppercase tracking-wider block">
                       {TIER_LABEL[p.tier]}
                     </span>
-                    <h3 className="font-extrabold uppercase text-xl text-deep mt-1 line-clamp-1">
+                    <h3 className="font-extrabold uppercase text-xl text-deep mt-1">
                       {p.n}
                     </h3>
+                    {p.description && <p className="text-sm text-muted mt-3">{p.description}</p>}
+                    {p.provisional && <p className="text-xs text-aqua-deep font-semibold mt-3">Preview · provisional price · ordering opens after pricing is confirmed</p>}
                   </div>
 
                   <div className="mt-4 pt-3 border-t border-line/60 flex items-center justify-between">
@@ -129,10 +134,11 @@ export const Shop: React.FC<ShopProps> = ({ onAddToCart }) => {
                       {formatJMD(p.p)}
                     </span>
                     <button
+                      disabled={p.provisional}
                       onClick={() => onAddToCart(p.originalIndex, p)}
                       className="btn btn-sm btn-sun text-xs py-1.5 px-3"
                     >
-                      + Add to Cart
+                      {p.provisional ? 'Coming soon' : '+ Add to Cart'}
                     </button>
                   </div>
                 </div>

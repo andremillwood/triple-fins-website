@@ -175,6 +175,29 @@ Checkout uses dynamic payment methods configured in Stripe. Paid fulfillment/sta
 
 ## Order workflow
 
+### Product and order management
+
+Authorized staff can use Store Management at `/admin` to create/edit products,
+change descriptions and JMD prices, hide/unhide listings, reorder listings and
+gallery images, and upload JPEG/PNG/WebP images (up to 5 MB) to the staff-protected
+`product-images` storage bucket. Staff can review order line items and update
+payment and fulfillment statuses. Hide retired products to retain order history.
+
+Apply `supabase/migrations/20261009163453_merchandise_catalog.sql` after the
+operational-loop migration. It adds 12 mockup products using all 16 supplied
+images. Hummingbird front/back pairs and alternate parka shots share galleries;
+the Year One black tees have different chest graphics and are separate products.
+Existing merchandise is preserved.
+
+Prices on these new products are deliberately provisional. They are displayed
+for review, with checkout disabled in both the UI and order API until staff
+approve the price by clearing the provisional-price flag. Descriptions describe
+the mockups; material, sizing and performance specifications still need supplier
+confirmation. The current store does not collect size variants.
+
+Web image copies total under 1 MB. Rebuild them with
+`node scripts/prepare-product-images.cjs "/path/to/Apparel Mockups"`.
+
 Customers enter contact details, choose pickup or delivery coordination, and select Stripe, bank transfer, or pay on pickup. Order totals are calculated from active Supabase products on the server. This release intentionally does not add complex inventory management.
 
 ## Verification

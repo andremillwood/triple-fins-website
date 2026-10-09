@@ -30,8 +30,9 @@ export async function POST(request: Request) {
   const supabase = getServiceSupabase();
   if (!supabase) return NextResponse.json({ success: false, error: 'Ordering service is unavailable.' }, { status: 503 });
   const ids = Array.from(quantities.keys());
-  const { data: products, error: productError } = await supabase.from('products').select('id,name,price_jmd').in('id', ids).eq('is_active', true);
+  const { data: products, error: productError } = await supabase.from('products').select('id,name,price_jmd,price_is_provisional').in('id', ids).eq('is_active', true);
   if (productError || !products || products.length !== ids.length) return NextResponse.json({ success: false, error: 'One or more products are unavailable. Refresh the store.' }, { status: 409 });
+  if (products.some((product) => product.price_is_provisional)) return NextResponse.json({ success: false, error: 'These products are previews with provisional prices. Contact us to confirm pricing before ordering.' }, { status: 409 });
   const orderItems = products.map((p) => ({ product_id: p.id, product_name: p.name, quantity: quantities.get(p.id)!, unit_price_jmd: Number(p.price_jmd) }));
   const subtotal = orderItems.reduce((sum, item) => sum + item.unit_price_jmd * item.quantity, 0);
   const { data: order, error: orderError } = await supabase.from('orders').insert({ customer_name, email, phone, subtotal_jmd: subtotal, payment_method, payment_status: payment_method === 'bank_transfer' ? 'manual_verification' : 'pending', payment_provider: payment_method === 'stripe' ? 'stripe' : null, fulfillment_method }).select('id').single();
