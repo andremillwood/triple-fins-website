@@ -101,14 +101,15 @@ export async function sendRegistrationEmails(registration: RegistrationSubmissio
   }
 }
 
-export async function sendOrderEmails(order: { id: string; customer_name: string; email: string; subtotal_jmd: number; payment_method: string }) {
+export async function sendOrderEmails(order: { id: string; customer_name: string; email: string; subtotal_jmd: number; payment_method: string; receiptUrl?: string }) {
   if (!resend) return { success: false, error: 'Email service is not configured' };
   const adminEmail = process.env.CONTACT_NOTIFICATION_EMAIL || DEFAULT_ADMIN_EMAIL;
   try {
-    await Promise.all([
+    const results = await Promise.all([
       resend.emails.send({ from: SENDER_EMAIL, to: adminEmail, subject: `[New Order] ${order.id}`, html: `<p>New order from ${escapeHtml(order.customer_name)} for JMD $${order.subtotal_jmd.toLocaleString()}.</p>` }),
-      resend.emails.send({ from: SENDER_EMAIL, to: order.email, subject: 'Your Triple Fins order is saved', html: `<p>Hi ${escapeHtml(order.customer_name)}, your order <strong>${escapeHtml(order.id)}</strong> is saved. Total: JMD $${order.subtotal_jmd.toLocaleString()}.</p><p>Payment method: ${escapeHtml(order.payment_method)}.</p>` }),
+      resend.emails.send({ from: SENDER_EMAIL, to: order.email, subject: 'Your Triple Fins order is saved', html: `<p>Hi ${escapeHtml(order.customer_name)}, your order <strong>${escapeHtml(order.id)}</strong> is saved. Merchandise subtotal: JMD $${order.subtotal_jmd.toLocaleString()}.</p><p>Payment method: ${escapeHtml(order.payment_method)}. Saving an order does not confirm payment. Our team will coordinate fulfillment and any delivery fees separately.</p>${order.receiptUrl ? `<p><a href="${escapeHtml(order.receiptUrl)}">View your private order receipt and status</a></p>` : ''}` }),
     ]);
+    if (results.some(result => result.error)) return { success: false, error: 'Email provider rejected a confirmation' };
     return { success: true };
   } catch (error) {
     return { success: false, error: (error as Error).message };

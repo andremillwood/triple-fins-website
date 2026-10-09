@@ -1,68 +1,57 @@
-import { randomBytes } from 'crypto';
+import { createHash, randomBytes } from 'crypto';
 import { NextResponse } from 'next/server';
 import { getServiceSupabase } from '@/lib/supabase';
 import { sendOrderEmails } from '@/lib/resend';
 import { clean, validEmail } from '@/lib/validation';
 import { rateLimit } from '@/lib/rateLimit';
 import { stripe, stripeEnabled } from '@/lib/stripe';
-
+const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export async function POST(request: Request) {
   if (!rateLimit(request, 6)) return NextResponse.json({ success: false, error: 'Too many requests. Please wait.' }, { status: 429 });
-  const body = await request.json().catch(() => null) as Record<string, unknown> | null;
-  if (!body) return NextResponse.json({ success: false, error: 'Invalid request.' }, { status: 400 });
-  const customer_name = clean(body.customer_name, 120);
-  const email = clean(body.email, 254).toLowerCase();
-  const phone = clean(body.phone, 40);
-  const payment_method = clean(body.payment_method, 30);
-  const fulfillment_method = clean(body.fulfillment_method, 30);
-  const items = Array.isArray(body.items) ? body.items.slice(0, 30) as Array<Record<string, unknown>> : [];
-  if (!customer_name || !validEmail(email) || phone.length < 7) return NextResponse.json({ success: false, error: 'Enter valid customer contact details.' }, { status: 400 });
-  if (!['stripe','bank_transfer','pay_on_pickup'].includes(payment_method)) return NextResponse.json({ success: false, error: 'Select a valid payment method.' }, { status: 400 });
-  if (!['pickup','delivery_coordination'].includes(fulfillment_method)) return NextResponse.json({ success: false, error: 'Select a fulfillment method.' }, { status: 400 });
-  if (!items.length) return NextResponse.json({ success: false, error: 'Your cart is empty.' }, { status: 400 });
-  if (payment_method === 'stripe' && (!stripeEnabled || !stripe)) return NextResponse.json({ success: false, error: 'Online payment is unavailable. Choose another payment method.' }, { status: 400 });
-  const quantities = new Map<string, number>();
-  for (const item of items) {
-    const id = clean(item.product_id, 80); const quantity = Number(item.quantity);
-    if (!id || !Number.isInteger(quantity) || quantity < 1 || quantity > 20) return NextResponse.json({ success: false, error: 'Invalid cart item.' }, { status: 400 });
-    quantities.set(id, Math.min(20, (quantities.get(id) || 0) + quantity));
+  const body = await request.json().catch(() => null);
+  const reject = (error: string, status = 400) => NextResponse.json({ success: false, error }, { status });
+  if (!body || !uuid.test(body.checkout_key || '')) return reject('Invalid checkout reference.');
+  const customer_name = clean(body.customer_name, 120), email = clean(body.email, 254).toLowerCase(), phone = clean(body.phone, 40);
+  const payment_method = clean(body.payment_method, 30), fulfillment_method = clean(body.fulfillment_method, 30), customer_notes = clean(body.customer_notes, 1000);
+  if (!customer_name || !validEmail(email) || phone.length < 7) return reject('Enter valid customer contact details.');
+  if (!['stripe','bank_transfer','pay_on_pickup'].includes(payment_method) || !['pickup','delivery_coordination'].includes(fulfillment_method)) return reject('Select valid payment and fulfillment methods.');
+  if (payment_method === 'stripe' && (!stripeEnabled || !stripe)) return reject('Online payment is unavailable. Choose another payment method.');
+  if (!Array.isArray(body.items) || !body.items.length || body.items.length > 30) return reject('Your cart must contain 1–30 items.');
+  const items: { product_id: string; quantity: number; size: string }[] = [];
+  for (const row of body.items) {
+    if (!row || !uuid.test(row.product_id || '') || !Number.isInteger(row.quantity) || row.quantity < 1 || row.quantity > 20) return reject('Invalid cart item.');
+    const size = clean(row.size, 40);
+    if (items.some(item => item.product_id === row.product_id && item.size === size)) return reject('Duplicate cart items.');
+    items.push({ product_id: row.product_id, quantity: row.quantity, size });
   }
+  items.sort((a, b) => (a.product_id + a.size).localeCompare(b.product_id + b.size));
   const supabase = getServiceSupabase();
-  if (!supabase) return NextResponse.json({ success: false, error: 'Ordering service is unavailable.' }, { status: 503 });
-  const ids = Array.from(quantities.keys());
-  const { data: products, error: productError } = await supabase.from('products').select('id,name,price_jmd,price_is_provisional').in('id', ids).eq('is_active', true);
-  if (productError || !products || products.length !== ids.length) return NextResponse.json({ success: false, error: 'One or more products are unavailable. Refresh the store.' }, { status: 409 });
-  if (products.some((product) => product.price_is_provisional)) return NextResponse.json({ success: false, error: 'These products are previews with provisional prices. Contact us to confirm pricing before ordering.' }, { status: 409 });
-  const orderItems = products.map((p) => ({ product_id: p.id, product_name: p.name, quantity: quantities.get(p.id)!, unit_price_jmd: Number(p.price_jmd) }));
-  const subtotal = orderItems.reduce((sum, item) => sum + item.unit_price_jmd * item.quantity, 0);
-  const { data: order, error: orderError } = await supabase.from('orders').insert({ customer_name, email, phone, subtotal_jmd: subtotal, payment_method, payment_status: payment_method === 'bank_transfer' ? 'manual_verification' : 'pending', payment_provider: payment_method === 'stripe' ? 'stripe' : null, fulfillment_method }).select('id').single();
-  if (orderError || !order) return NextResponse.json({ success: false, error: 'Could not safely save your order.' }, { status: 500 });
-  const { error: itemsError } = await supabase.from('order_items').insert(orderItems.map((item) => ({ ...item, order_id: order.id })));
-  if (itemsError) {
-    await supabase.from('orders').delete().eq('id', order.id);
-    return NextResponse.json({ success: false, error: 'Could not safely save your order items.' }, { status: 500 });
-  }
-  const emailResult = await sendOrderEmails({ id: order.id, customer_name, email, subtotal_jmd: subtotal, payment_method });
-  let checkoutUrl: string | null = null;
-  let checkoutError: string | null = null;
+  if (!supabase) return reject('Ordering service is unavailable.', 503);
+  const hash = createHash('sha256').update(JSON.stringify({ customer_name, email, phone, payment_method, fulfillment_method, customer_notes, items })).digest('hex');
+  const { data: saved, error } = await supabase.rpc('create_store_order', { p_key: body.checkout_key, p_hash: hash, p_token: randomBytes(32).toString('hex'), p_name: customer_name, p_email: email, p_phone: phone, p_payment: payment_method, p_fulfillment: fulfillment_method, p_notes: customer_notes, p_items: items });
+  if (error || !saved) return reject(error?.code === 'P0001' ? error.message : 'Could not safely save your order. Please retry with the same checkout details.', error?.code === 'P0001' ? 409 : 503);
+  const { data: order, error: readError } = await supabase.from('orders').select('id,customer_name,email,subtotal_jmd,payment_method,order_items(*)').eq('id', saved.id).single();
+  if (readError || !order) return reject('Order saved, but its receipt could not load. Retry with the same details.', 503);
+  const origin = process.env.NEXT_PUBLIC_SITE_URL || new URL(request.url).origin;
+  const receiptUrl = `${origin}/orders/${saved.id}?token=${saved.token}`;
+  let checkoutUrl: string | null = null, checkoutError: string | null = null;
   if (payment_method === 'stripe' && stripe) {
     try {
-      const origin = process.env.NEXT_PUBLIC_SITE_URL || new URL(request.url).origin;
       const session = await stripe.checkout.sessions.create({
         mode: 'payment', customer_email: email,
-        line_items: orderItems.map((item) => ({ quantity: item.quantity, price_data: { currency: 'jmd', unit_amount: Math.round(item.unit_price_jmd * 100), product_data: { name: item.product_name } } })),
-        metadata: { record_type: 'order', order_id: order.id },
-        success_url: `${origin}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${origin}/?order=${order.id}&payment=cancelled#shop`,
-        integration_identifier: `triplefins_${randomBytes(4).toString('hex')}`,
-      });
+        line_items: order.order_items.map((item: { quantity: number; unit_price_jmd: number; product_name: string; size: string }) => ({ quantity: item.quantity, price_data: { currency: 'jmd', unit_amount: Math.round(Number(item.unit_price_jmd) * 100), product_data: { name: item.product_name + (item.size ? ` — ${item.size}` : '') } } })),
+        metadata: { record_type: 'order', order_id: saved.id },
+        success_url: receiptUrl + '&payment=returned', cancel_url: receiptUrl + '&payment=cancelled',
+      }, { idempotencyKey: `order-${saved.id}` });
+      const { error: referenceError } = await supabase.from('orders').update({ payment_reference: session.id }).eq('id', saved.id);
+      if (referenceError) throw new Error('Payment reference could not be saved');
       checkoutUrl = session.url;
-      await supabase.from('orders').update({ payment_reference: session.id }).eq('id', order.id);
-    } catch (err) {
-      console.error('[Stripe order checkout]', err);
-      checkoutError = 'Order saved, but checkout could not start. Contact us to complete payment.';
-    }
+    } catch { checkoutError = 'Your order is saved, but online payment could not start. Keep your reference and contact the team before paying.'; }
   }
-  await supabase.from('analytics_events').insert({ event_name: 'order_completed', metadata: { payment_method, subtotal_jmd: subtotal } });
-  return NextResponse.json({ success: true, message: emailResult.success ? 'Order saved.' : 'Order saved, but confirmation email failed.', data: { id: order.id, checkoutUrl, checkoutError } });
+  let message = 'Order saved. Payment and fulfillment are confirmed separately.';
+  if (!saved.reused) {
+    const result = await sendOrderEmails({ ...order, subtotal_jmd: Number(order.subtotal_jmd), receiptUrl });
+    if (!result.success) message += ' Confirmation email could not be sent; keep your receipt link.';
+  }
+  return NextResponse.json({ success: true, message, data: { id: saved.id, receiptUrl, checkoutUrl, checkoutError } });
 }

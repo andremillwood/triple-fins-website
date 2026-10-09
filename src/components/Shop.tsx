@@ -1,152 +1,32 @@
 'use client';
-
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import Image from 'next/image';
-import { Product, ProductTier } from '@/types';
-import { ProductGallery } from './ProductGallery';
-
-const PALETTE = ['#0B2E4E', '#0F8BBF', '#16B3C9', '#15D2DB', '#FFB020', '#FF5A5F'];
-
-const TIER_LABEL: Record<ProductTier, string> = {
-  athlete: 'Kids / Athlete',
-  supporter: 'Adult / Supporter',
-  everyday: 'Everyday Gear',
-};
-
-interface ShopProps {
-  onAddToCart: (index: number, product: Product) => void;
+import { Product } from '@/types';
+import { categorySlug, mapProduct, money } from '@/lib/catalogue';
+export function useCatalogue() {
+  const [products, setProducts] = useState<Product[]>([]); const [error, setError] = useState(''); const [loading, setLoading] = useState(true);
+  useEffect(() => { const controller = new AbortController(); fetch('/api/products', { signal: controller.signal }).then(async response => {
+    const result = await response.json(); if (!response.ok || !result.success) throw new Error('The store could not load. Please refresh or contact us.');
+    setProducts(result.data.map(mapProduct));
+  }).catch(err => { if (err.name !== 'AbortError') setError(err.message); }).finally(() => setLoading(false)); return () => controller.abort(); }, []);
+  return { products, loading, error };
 }
-
-export const Shop: React.FC<ShopProps> = ({ onAddToCart }) => {
-  const [activeTier, setActiveTier] = useState<string>('all');
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loadState, setLoadState] = useState<'loading'|'ready'|'error'>('loading');
-  useEffect(() => {
-    fetch('/api/products').then(async (response) => {
-      const result = await response.json();
-      if (!response.ok || !result.success) throw new Error();
-      setProducts(result.data.map((p: { id: string; name: string; category: string; tier: ProductTier; price_jmd: number|string; image_url?: string; image_urls?: string[]; description?: string; price_is_provisional?: boolean }) => ({ id: p.id, n: p.name, cat: p.category, tier: p.tier, p: Number(p.price_jmd), image: p.image_url, images: p.image_urls?.length ? p.image_urls : p.image_url ? [p.image_url] : [], description: p.description, provisional: p.price_is_provisional })));
-      setLoadState('ready');
-    }).catch(() => setLoadState('error'));
-  }, []);
-
-  const filteredProducts = products.map((prod, index) => ({
-    ...prod,
-    originalIndex: index,
-  })).filter((prod) => (activeTier === 'all' ? true : prod.tier === activeTier));
-
-  const formatJMD = (amount: number) => {
-    return `JMD $${amount.toLocaleString()}`;
-  };
-
-  return (
-    <section id="shop" className="sec bg-paper py-20 md:py-28">
-      <div className="wrap">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
-          <div className="max-w-[580px]">
-            <p className="eyebrow">Official Merchandise</p>
-            <h2 className="font-extrabold uppercase text-3xl md:text-5xl text-deep mt-1">
-              Triple Fins Store
-            </h2>
-            <div className="h-[3px] w-16 bg-aqua mt-2"></div>
-            <p className="text-muted mt-3 text-base md:text-lg">
-              Equip your athlete with high-performance team wear, supporter gear, and training essentials.
-            </p>
-          </div>
-
-          {/* Tier Filter Buttons */}
-          <div className="flex flex-wrap gap-2">
-            {[
-              { id: 'all', label: 'All Items' },
-              { id: 'athlete', label: 'Kids & Athletes' },
-              { id: 'supporter', label: 'Supporters' },
-              { id: 'everyday', label: 'Everyday Gear' },
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTier(tab.id)}
-                className={`font-display font-bold uppercase tracking-wider text-xs md:text-sm px-4 py-2 rounded-sm transition-all ${
-                  activeTier === tab.id
-                    ? 'bg-deep text-white shadow-md'
-                    : 'bg-foam text-deep hover:bg-line'
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Product Grid */}
-        {loadState === 'loading' && <p className="p-6 bg-foam text-muted">Loading the current merchandise catalogue…</p>}
-        {loadState === 'error' && <p className="p-6 bg-rose-50 text-rose-800">The store could not load. Please refresh or contact us.</p>}
-        {loadState === 'ready' && products.length === 0 && <p className="p-6 bg-foam text-muted">No merchandise is available right now.</p>}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {filteredProducts.map((p) => {
-            const colorBg = PALETTE[p.originalIndex % PALETTE.length];
-            const useLightLogo = colorBg !== '#FFB020' && colorBg !== '#15D2DB';
-
-            return (
-              <div
-                key={p.id || p.originalIndex}
-                className="bg-white border border-line flex flex-col justify-between corner-cut transition-all duration-200 hover:-translate-y-1 hover:shadow-lg group"
-              >
-                {p.images?.length ? <ProductGallery name={p.n} images={p.images} /> : <>
-                {/* Tile Visual */}
-                <div
-                  className="relative aspect-square flex items-center justify-center p-8 transition-transform group-hover:scale-[1.02]"
-                  style={{ backgroundColor: colorBg }}
-                >
-                  <span className="absolute top-3 left-3 bg-deep2/80 backdrop-blur-sm text-white font-display font-semibold text-[11px] uppercase tracking-wider px-2.5 py-1 rounded-sm">
-                    {p.cat}
-                  </span>
-
-                  <Image
-                    src={
-                      useLightLogo
-                        ? '/brand-assets/TF_Logo_light.png'
-                        : '/brand-assets/TF_Logo_Dark.png'
-                    }
-                    alt={p.n}
-                    width={100}
-                    height={100}
-                    className="w-2/5 h-auto opacity-80 drop-shadow-md"
-                  />
-                </div>
-                </>}
-
-                {/* Details */}
-                <div className="p-5 flex flex-col flex-1 justify-between">
-                  <div>
-                    <span className="font-display font-semibold text-xs text-muted uppercase tracking-wider block">
-                      {TIER_LABEL[p.tier]}
-                    </span>
-                    <h3 className="font-extrabold uppercase text-xl text-deep mt-1">
-                      {p.n}
-                    </h3>
-                    {p.description && <p className="text-sm text-muted mt-3">{p.description}</p>}
-                    {p.provisional && <p className="text-xs text-aqua-deep font-semibold mt-3">Preview · provisional price · ordering opens after pricing is confirmed</p>}
-                  </div>
-
-                  <div className="mt-4 pt-3 border-t border-line/60 flex items-center justify-between">
-                    <span className="font-display font-bold text-deep text-lg">
-                      {formatJMD(p.p)}
-                    </span>
-                    <button
-                      disabled={p.provisional}
-                      onClick={() => onAddToCart(p.originalIndex, p)}
-                      className="btn btn-sm btn-sun text-xs py-1.5 px-3"
-                    >
-                      {p.provisional ? 'Coming soon' : '+ Add to Cart'}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    </section>
-  );
-};
+export function ProductCard({ product }: { product: Product }) {
+  return <Link href={`/shop/${product.slug || product.id}`} className="bg-white border border-line group block hover:shadow-lg transition-shadow">
+    <div className="aspect-square relative bg-foam"><Image src={product.images?.[0] || '/brand-assets/TF_Logo_Dark.png'} alt={product.n} fill sizes="(max-width:640px) 100vw,(max-width:1024px) 50vw,25vw" className="object-contain p-5" /></div>
+    <div className="p-5"><p className="eyebrow">{product.cat}</p><h3 className="text-xl font-extrabold uppercase text-deep group-hover:text-aqua-deep">{product.n}</h3><p className="mt-3 font-semibold">{money(product.p)}</p>{product.provisional && <p className="text-sm text-muted mt-1">Provisional price · preview only</p>}<span className="block mt-4 text-sm underline">View product →</span></div>
+  </Link>;
+}
+export function Shop({ category }: { category?: string }) {
+  const { products, loading, error } = useCatalogue(); const [tier, setTier] = useState('all');
+  const categories = Array.from(new Set(products.map(product => product.cat)));
+  const filtered = products.filter(product => (!category || categorySlug(product.cat) === category) && (tier === 'all' || product.tier === tier));
+  return <section id="shop" className="py-16 md:py-24"><div className="wrap"><p className="eyebrow">Official merchandise</p><h1 className="text-4xl md:text-6xl font-extrabold uppercase text-deep">{category ? categories.find(name => categorySlug(name) === category) || 'Category' : 'Triple Fins Store'}</h1>
+    <p className="mt-4 text-muted max-w-xl">Team colours. Everyday pride. Explore the collection and every product angle. Preview prices will be confirmed before ordering opens.</p>
+    <nav aria-label="Product categories" className="flex flex-wrap gap-3 my-8"><Link className="btn btn-sm btn-outline" href="/shop">All products</Link>{categories.map(name => <Link key={name} className="btn btn-sm btn-outline" aria-current={categorySlug(name) === category ? 'page' : undefined} href={`/shop/category/${categorySlug(name)}`}>{name}</Link>)}</nav>
+    <label className="block mb-8">Collection <select className="ml-3 p-3 border border-line bg-white" value={tier} onChange={event => setTier(event.target.value)}><option value="all">All collections</option><option value="athlete">Kids & athletes</option><option value="supporter">Supporters</option><option value="everyday">Everyday gear</option></select></label>
+    {loading && <p role="status">Loading catalogue…</p>}{error && <p role="alert">{error}</p>}{!loading && !error && filtered.length === 0 && <p>No products in this category.</p>}
+    <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">{filtered.map(product => <ProductCard key={product.id} product={product} />)}</div>
+  </div></section>;
+}

@@ -113,6 +113,19 @@ h1, h2, h3, .disp {
   font-size: 0.9rem;
 }
 
+.btn-outline {
+  background: transparent;
+  color: var(--deep);
+  border: 1px solid var(--line);
+  min-height: 44px;
+}
+
+.btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+  transform: none;
+}
+
 :focus-visible {
   outline: 3px solid var(--sun);
   outline-offset: 2px;

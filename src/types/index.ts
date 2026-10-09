@@ -2,6 +2,8 @@ export type ProductTier = 'athlete' | 'supporter' | 'everyday';
 
 export interface Product {
   id?: string;
+  slug?: string;
+  sizes?: string[];
   n: string; // name
   cat: string; // category
   tier: ProductTier;
@@ -16,6 +18,7 @@ export interface CartItem {
   index: string;
   product: Product;
   quantity: number;
+  size?: string;
 }
 
 export type ProgramType = 'sunday_swim' | 'summer_camp' | 'private_coaching';
