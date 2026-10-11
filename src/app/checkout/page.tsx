@@ -4,13 +4,13 @@ import Link from 'next/link';
 import { useCart } from '@/components/CartProvider';
 import { CartLines } from '@/components/CartLines';
 import { StoreShell } from '@/components/StoreShell';
-import { money } from '@/lib/catalogue';
+import { canOrder, cartSubtotal, money } from '@/lib/catalogue';
 export default function CheckoutPage() {
   const { cart, ready, clear } = useCart(); const locked = useRef(false);
   const [busy, setBusy] = useState(false), [error, setError] = useState(''), [stripeEnabled, setStripeEnabled] = useState(false);
   useEffect(() => { fetch('/api/config').then(response => response.json()).then(data => setStripeEnabled(!!data.stripeEnabled)).catch(() => {}); }, []);
   async function submit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault(); if (locked.current) return; locked.current = true; setBusy(true); setError('');
+    event.preventDefault(); if (locked.current) return; if (cart.some(item => !canOrder(item.product))) { setError('Remove unavailable items before ordering.'); return; } locked.current = true; setBusy(true); setError('');
     const form = new FormData(event.currentTarget);
     const payload = { customer_name: form.get('customer_name'), email: form.get('email'), phone: form.get('phone'), payment_method: form.get('payment_method'), fulfillment_method: form.get('fulfillment_method'), customer_notes: form.get('customer_notes'), items: cart.map(item => ({ product_id: item.product.id, quantity: item.quantity, size: item.size || '' })) };
     try {
@@ -35,8 +35,8 @@ export default function CheckoutPage() {
         <label className="block">Payment<select name="payment_method" className={input}><option value="pay_on_pickup">Pay on pickup</option><option value="bank_transfer">Bank transfer — details supplied by the team</option>{stripeEnabled && <option value="stripe">Secure card payment with Stripe</option>}</select></label>
         <p className="text-sm text-muted">{stripeEnabled ? 'Card payments open secure Stripe Checkout.' : 'Online card payment is not available yet.'} For bank transfer, wait for verified account instructions and use your order reference. No transfer is marked paid until staff verify it.</p>
         <p className="text-sm text-muted">Merchandise subtotal only. Delivery fees, timing and availability are confirmed with you before dispatch.</p>
-        {error && <p role="alert" className="bg-rose-50 text-rose-800 p-4">{error}</p>}<button disabled={busy} className="btn btn-sun w-full">{busy ? 'Saving your order…' : 'Place order'}</button>
-      </form><aside className="bg-foam p-6 h-fit"><h2 className="font-bold text-2xl">Your order</h2><CartLines /><p className="border-t border-line pt-5 flex justify-between"><span>Subtotal</span><strong>{money(cart.reduce((sum, item) => sum + item.quantity * item.product.p, 0))}</strong></p><p className="text-sm mt-4">Prices and available sizes are verified again when you order.</p></aside>
+        {error && <p role="alert" className="bg-rose-50 text-rose-800 p-4">{error}</p>}<button disabled={busy || cart.some(item => !canOrder(item.product))} className="btn btn-sun w-full">{busy ? 'Saving your order…' : 'Place order'}</button>
+      </form><aside className="bg-foam p-6 h-fit"><h2 className="font-bold text-2xl">Your order</h2><CartLines /><p className="border-t border-line pt-5 flex justify-between"><span>Subtotal</span><strong>{money(cartSubtotal(cart))}</strong></p><p className="text-sm mt-4">Prices and available sizes are verified again when you order.</p></aside>
     </div>}
   </div></StoreShell>;
 }

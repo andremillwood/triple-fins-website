@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Image from 'next/image';
+import { canOrder, cartSubtotal, money } from '@/lib/catalogue';
 import { CartItem } from '@/types';
 
 interface CartDrawerProps {
@@ -27,16 +28,13 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
 
   if (!isOpen) return null;
 
-  const subtotal = cart.reduce(
-    (acc, item) => acc + item.product.p * item.quantity,
-    0
-  );
+  const subtotal = cartSubtotal(cart);
 
   const totalCount = cart.reduce((acc, item) => acc + item.quantity, 0);
 
   const handleCheckout = async (event?: React.FormEvent) => {
     event?.preventDefault();
-    if (cart.length === 0) {
+    if (cart.length === 0 || cart.some(item => !canOrder(item.product))) {
       setCheckoutMessage('Your cart is empty. Add an item before checking out.');
       return;
     }
@@ -126,7 +124,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                     {item.product.n}
                   </h4>
                   <p className="font-display font-bold text-aqua-deep text-sm">
-                    JMD ${(item.product.p * item.quantity).toLocaleString()}
+                    {money(item.product.p === null ? null : item.product.p * item.quantity)}
                   </p>
 
                   {/* Qty controls */}
@@ -169,7 +167,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
               Estimated Subtotal
             </span>
             <span className="font-display font-extrabold text-2xl text-deep">
-              JMD ${subtotal.toLocaleString()}
+              {money(subtotal)}
             </span>
           </div>
 

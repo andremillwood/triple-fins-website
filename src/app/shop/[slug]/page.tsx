@@ -5,7 +5,7 @@ import { StoreShell } from '@/components/StoreShell';
 import { ProductGallery } from '@/components/ProductGallery';
 import { ProductCard, useCatalogue } from '@/components/Shop';
 import { useCart } from '@/components/CartProvider';
-import { categorySlug, money } from '@/lib/catalogue';
+import { canOrder, categorySlug, money } from '@/lib/catalogue';
 export default function ProductPage({ params }: { params: { slug: string } }) {
   const { products, loading, error } = useCatalogue(); const { add, ready } = useCart();
   const [size, setSize] = useState(''); const [quantity, setQuantity] = useState(1); const [added, setAdded] = useState(false);
@@ -16,9 +16,9 @@ export default function ProductPage({ params }: { params: { slug: string } }) {
       <nav aria-label="Breadcrumb" className="flex flex-wrap gap-3 text-sm mb-8"><Link href="/shop">Store</Link><span>/</span><Link href={`/shop/category/${categorySlug(product.cat)}`}>{product.cat}</Link><span>/</span><span>{product.n}</span></nav>
       <div className="grid md:grid-cols-2 gap-10 md:gap-16">
         <ProductGallery name={product.n} images={product.images?.length ? product.images : ['/brand-assets/TF_Logo_Dark.png']} />
-        <div><p className="eyebrow">{product.cat} · {product.tier}</p><h1 className="text-4xl md:text-5xl font-extrabold uppercase text-deep">{product.n}</h1><p className="text-2xl font-bold mt-6">{money(product.p)}</p>
+        <div><p className="eyebrow !text-deep">{product.cat} · {product.tier}</p><h1 className="text-4xl md:text-5xl font-extrabold uppercase text-deep">{product.n}</h1><p className="text-2xl font-bold mt-6">{money(product.p)}</p>
           <p className="text-muted mt-6 leading-relaxed">{product.description || 'Represent Triple Fins at training, meets and beyond. Contact the team for product specifications and availability.'}</p>
-          {product.provisional ? <div className="p-5 bg-foam mt-8"><h2 className="font-bold">Collection preview</h2><p className="mt-2">This price is provisional. Ordering will open after the team confirms pricing and availability.</p><Link href="/#contact" className="btn btn-deep mt-4">Ask about this product</Link></div> : <div className="mt-8 space-y-5">
+          {!canOrder(product) ? <div className="p-5 bg-foam mt-8"><h2 className="font-bold">Planned / preview product</h2><p className="mt-2">Ordering is not open. Price, availability, sizes and product details must be confirmed before this item can be purchased.</p><Link href="/#contact" className="btn btn-deep mt-4">Ask about this product</Link></div> : <div className="mt-8 space-y-5">
             {!!product.sizes?.length && <label className="block">Size<select required value={size} onChange={event => { setSize(event.target.value); setAdded(false); }} className="block w-full border border-line p-3 mt-2 bg-white"><option value="">Choose a size</option>{product.sizes.map(value => <option key={value}>{value}</option>)}</select></label>}
             <label className="block">Quantity<input className="block w-24 border border-line p-3 mt-2" type="number" min="1" max="20" value={quantity} onChange={event => setQuantity(Number(event.target.value))} /></label>
             <button disabled={!ready || (!!product.sizes?.length && !size) || !Number.isInteger(quantity) || quantity < 1 || quantity > 20} className="btn btn-sun w-full disabled:opacity-50" onClick={() => { add(product, size, quantity); setAdded(true); }}>Add to cart</button>
