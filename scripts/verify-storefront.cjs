@@ -28,6 +28,11 @@ async function run() {
     await page.getByRole('heading',{name:'No matches in this lane.'}).waitFor();
     await page.getByRole('button',{name:'Reset filters'}).click();
     assert.equal(await page.locator('.retail-product').count(),result.data.length);
+    await page.locator('.collection-menu summary').click();
+    await page.getByRole('link',{name:'Supporter collection',exact:true}).click();
+    await page.waitForFunction(()=>document.querySelector('input[name="collection"][value="supporter"]')?.checked);
+    assert.equal(await page.locator('.retail-product').count(),result.data.filter(p=>p.tier==='supporter').length);
+    await page.getByRole('button',{name:'Clear filters',exact:true}).click();
     await page.getByLabel('Available to order').check();
     assert.equal(await page.locator('.retail-product').count(),result.data.filter(orderable).length);
     await page.getByRole('button',{name:'Quick add',exact:true}).first().click();

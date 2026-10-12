@@ -1,5 +1,6 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Search, ArrowUpRight, SlidersHorizontal, Plus } from 'lucide-react';
@@ -36,14 +37,18 @@ const edits = [
   { title: 'Team spirit. Head to toe.', subtitle: 'Tracksuits & outerwear', href: '/shop?collection=athlete', image: '/images/products/tracksuit-1.webp', tone: 'edit-navy' },
 ];
 export function Shop({ category, featured = false }: { category?: string; featured?: boolean }) {
+  return <Suspense fallback={<div className="retail-wrap py-12" role="status">Loading collection…</div>}><ShopContent category={category} featured={featured} /></Suspense>;
+}
+function ShopContent({ category, featured = false }: { category?: string; featured?: boolean }) {
   const { products, loading, error } = useCatalogue();
+  const queryString = useSearchParams().toString();
   const [search, setSearch] = useState(''), [collection, setCollection] = useState('all'), [availability, setAvailability] = useState('all'), [sort, setSort] = useState('featured');
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
+    const params = new URLSearchParams(queryString);
     setSearch(params.get('search') || '');
     const value = params.get('collection');
     setCollection(value && ['athlete','supporter','everyday'].includes(value) ? value : 'all');
-  }, [category]);
+  }, [category, queryString]);
   const categories = Array.from(new Set(products.map(product => product.cat)));
   const scoped = products.filter(product => !category || categorySlug(product.cat) === category);
   const filtered = browseProducts(scoped, { search, collection, availability, sort });
