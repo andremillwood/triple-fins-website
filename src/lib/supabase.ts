@@ -11,8 +11,8 @@ export const supabase = supabaseUrl && supabaseAnonKey
 
 // Server / Admin client for secure server-side operations
 export const getServiceSupabase = () => {
-  if (supabaseUrl && (supabaseServiceKey || supabaseAnonKey)) {
-    return createClient(supabaseUrl, supabaseServiceKey || supabaseAnonKey, {
+  if (supabaseUrl && supabaseServiceKey) {
+    return createClient(supabaseUrl, supabaseServiceKey, {
       auth: {
         persistSession: false,
         autoRefreshToken: false,
@@ -21,3 +21,5 @@ export const getServiceSupabase = () => {
   }
   return null;
 };
+
+export const isDatabaseConfigured = Boolean(supabaseUrl && supabaseServiceKey);

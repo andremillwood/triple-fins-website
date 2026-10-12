@@ -139,4 +139,99 @@ triple-fins-website/
 ```
 
 ---
+## Operational flows
+
+- Program CTAs open the registration form with the chosen program selected.
+- Registrations are validated and persisted before email or payment is attempted.
+- Stripe-hosted Checkout handles configured online payments. The signed webhook at `/api/webhooks/stripe` is the payment source of truth.
+- Bank transfer/manual verification and pay-on-site remain available without Stripe.
+- Merchandise is loaded from the Supabase `products` table. Checkout creates an order and immutable line-item price snapshots after validating current server-side prices.
+- Authorized staff can sign in at `/admin` to review registrations and inquiries and update operational statuses.
+
+## Database migrations and staff setup
+
+Production migration application requires explicit approval. For an approved environment, apply migrations in chronological order with the Supabase CLI (`supabase db push`); the first migration is `supabase/migrations/202609280001_operational_loop.sql` in the SQL editor. The migration adds payment and registration metadata, staff roles, orders, order items, analytics events, indexes, and restrictive RLS policies.
+
+Create a staff user in Supabase Auth, then authorize the user using their UUID:
+
+```sql
+insert into public.staff_roles (user_id, role)
+values ('AUTH_USER_UUID', 'admin');
+```
+
+Authentication alone does not grant customer-record access; the user must have a `staff_roles` row.
+
+## Stripe setup
+
+Stripe is optional for a manual-payment launch. To enable **Pay online**, configure `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, and positive JMD prices for each program in `.env.local`. Prefer a restricted (`rk_`) server key. Do not expose secret keys to the browser.
+
+Create a Stripe webhook endpoint for `https://YOUR_DOMAIN/api/webhooks/stripe` and subscribe to:
+
+- `checkout.session.completed`
+- `checkout.session.async_payment_succeeded`
+- `checkout.session.async_payment_failed`
+
+Checkout uses dynamic payment methods configured in Stripe. Paid fulfillment/status is driven by verified webhook events, never by the success page.
+
+## Order workflow
+
+### Product and order management
+
+Authorized staff can use Store Management at `/admin` to create/edit products,
+change descriptions and JMD prices, hide/unhide listings, reorder listings and
+gallery images, and upload JPEG/PNG/WebP images (up to 5 MB) to the staff-protected
+`product-images` storage bucket. Staff can review order line items and update
+payment and fulfillment statuses. Hide retired products to retain order history.
+
+Apply `supabase/migrations/20261009163453_merchandise_catalog.sql` after the
+operational-loop migration. It adds 12 mockup products using all 16 supplied
+images. Hummingbird front/back pairs and alternate parka shots share galleries;
+the Year One black tees have different chest graphics and are separate products.
+Existing merchandise is preserved.
+
+Prices on these new products are deliberately provisional. They are displayed
+for review, with checkout disabled in both the UI and order API until staff
+approve the price by clearing the provisional-price flag. Newly created products also require confirmed availability, approved public content and approved variants. Descriptions describe
+the mockups; material, sizing and performance specifications still need supplier
+confirmation. The store collects configured size variants on product pages, validates them again in the atomic checkout function, and snapshots the selected size on each order line. Empty size lists mean no size applies only after staff approve variants.
+
+Web image copies total under 1 MB. Rebuild them with
+`node scripts/prepare-product-images.cjs "/path/to/Apparel Mockups"`.
+
+Customers enter contact details, choose pickup or delivery coordination, and select Stripe, bank transfer, or pay on pickup. Order totals are calculated from active Supabase products on the server. This release intentionally does not add complex inventory management.
+
+## Verification
+
+```bash
+npm install
+npm run test
+npm run typecheck
+npm run lint
+npm run build
+```
+
 *A Point Global Marketing initiative · Swim Strong. Play Hard. Build Champions.*
+
+
+## Supplier catalogue review (Javette workbook)
+
+See [catalogue review and import instructions](docs/catalogue-review.md). The importer
+prepares 66 distinct planned SKUs without replacing the 16 seed or 12 mockup products.
+Core previews are visible; Phase 2 is hidden. Neither phase implies stock or approval.
+Unknown prices display as **Price pending**, never zero/free. All new rows remain
+non-orderable until price, availability/fulfilment, variants and public content are approved.
+Supplier/commercial data lives in `catalogue_private`, with no anonymous or browser
+staff privileges. Never place it in `public.products`, descriptions or client code.
+
+The catalogue migration preserves existing products' prior purchase eligibility;
+legacy approval defaults are compatibility flags, not new supplier certifications.
+Existing provisional prices are still rejected. Stripe and production readiness
+remain separate work and are not certified by this catalogue change.
+
+Additional isolated database verification (Docker required):
+
+```bash
+node scripts/test-catalogue-db.mjs
+# Optional: validate the actual source without committing or printing it
+node scripts/test-catalogue-db.mjs /private/workbook.json
+```

@@ -2,17 +2,42 @@ export type ProductTier = 'athlete' | 'supporter' | 'everyday';
 
 export interface Product {
   id?: string;
+  slug?: string;
+  sizes?: string[];
   n: string; // name
   cat: string; // category
   tier: ProductTier;
-  p: number; // price in JMD
+  p: number | null; // null means price pending, never free
+  phase?: 'Core' | 'Phase 2' | 'Drop' | null;
+  orderable?: boolean;
   image?: string;
+  images?: string[];
+  description?: string;
+  provisional?: boolean;
 }
 
 export interface CartItem {
-  index: number;
+  index: string;
   product: Product;
   quantity: number;
+  size?: string;
+}
+
+export type ProgramType = 'sunday_swim' | 'summer_camp' | 'private_coaching';
+export type PaymentMethod = 'stripe' | 'bank_transfer' | 'pay_on_site';
+
+export interface RegistrationSubmission {
+  program_type: ProgramType;
+  participant_name: string;
+  participant_age?: number;
+  parent_name?: string;
+  email: string;
+  phone: string;
+  swimming_level: 'beginner' | 'intermediate' | 'advanced';
+  medical_notes?: string;
+  preferred_session?: string;
+  consent: boolean;
+  payment_method: PaymentMethod;
 }
 
 export interface InquirySubmission {

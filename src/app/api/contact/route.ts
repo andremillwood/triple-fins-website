@@ -2,9 +2,12 @@ import { NextResponse } from 'next/server';
 import { getServiceSupabase } from '@/lib/supabase';
 import { sendInquiryEmails } from '@/lib/resend';
 import { InquirySubmission } from '@/types';
+import { clean, validEmail } from '@/lib/validation';
+import { rateLimit } from '@/lib/rateLimit';
 
 export async function POST(request: Request) {
   try {
+    if (!rateLimit(request)) return NextResponse.json({ success: false, error: 'Too many requests. Please wait a minute.' }, { status: 429 });
     const body = await request.json();
     const { name, email, phone, message, program_interest } = body as InquirySubmission;
 
@@ -15,7 +18,7 @@ export async function POST(request: Request) {
       );
     }
 
-    if (!email || !email.trim() || !email.includes('@')) {
+    if (!email || !validEmail(clean(email, 254))) {
       return NextResponse.json(
         { success: false, error: 'A valid email address is required' },
         { status: 400 }
@@ -30,18 +33,20 @@ export async function POST(request: Request) {
     }
 
     const payload: InquirySubmission = {
-      name: name.trim(),
-      email: email.trim().toLowerCase(),
-      phone: phone ? phone.trim() : undefined,
-      message: message.trim(),
-      program_interest: program_interest || 'General Inquiry',
+      name: clean(name, 120),
+      email: clean(email, 254).toLowerCase(),
+      phone: clean(phone, 40) || undefined,
+      message: clean(message, 2000),
+      program_interest: clean(program_interest, 80) || 'General Inquiry',
     };
 
     // 1. Insert into Supabase (if configured)
     const supabase = getServiceSupabase();
+    if (!supabase) {
+      return NextResponse.json({ success: false, error: 'Registration service is not configured. Please call or WhatsApp us.' }, { status: 503 });
+    }
     let dbRecordId: string | null = null;
-
-    if (supabase) {
+    {
       const { data, error: dbError } = await supabase
         .from('inquiries')
         .insert([
@@ -59,11 +64,10 @@ export async function POST(request: Request) {
 
       if (dbError) {
         console.error('[Supabase Insert Error]', dbError);
+        return NextResponse.json({ success: false, error: 'We could not safely save your enquiry. Please try again or contact us by phone.' }, { status: 500 });
       } else if (data) {
         dbRecordId = data.id;
       }
-    } else {
-      console.warn('[Supabase] Not configured. Skipping database write.');
     }
 
     // 2. Dispatch notification & confirmation via Resend
@@ -72,7 +76,9 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         success: true,
-        message: 'Thank you! Your enquiry has been received and our team will get in touch shortly.',
+        message: emailResult.success
+          ? 'Thank you! Your enquiry has been received and our team will get in touch shortly.'
+          : 'Your enquiry was saved, but we could not send the confirmation email. Our team can still see it.',
         data: {
           id: dbRecordId,
           emailSent: emailResult.success,

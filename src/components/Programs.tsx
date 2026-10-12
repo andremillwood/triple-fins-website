@@ -1,8 +1,14 @@
+'use client';
+
 import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 
 export const Programs: React.FC = () => {
+  const chooseProgram = (program: 'sunday_swim'|'summer_camp'|'private_coaching') => {
+    window.dispatchEvent(new CustomEvent('select-program', { detail: program }));
+    fetch('/api/analytics', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event_name: 'program_cta_clicked', metadata: { program } }) }).catch(() => {});
+  };
   return (
     <section id="program" className="sec bg-foam py-20 md:py-28">
       <div className="wrap">
@@ -54,7 +60,7 @@ export const Programs: React.FC = () => {
                 <span className="font-display font-bold text-deep text-lg">
                   Ages 4+ &amp; Adults
                 </span>
-                <Link href="#contact" className="btn btn-sm btn-deep">
+                <Link href="#register" onClick={() => chooseProgram('sunday_swim')} className="btn btn-sm btn-deep">
                   Reserve Spot
                 </Link>
               </div>
@@ -93,11 +99,15 @@ export const Programs: React.FC = () => {
                 <span className="font-display font-bold text-deep text-lg">
                   July – August Cohorts
                 </span>
-                <Link href="#contact" className="btn btn-sm btn-sun">
-                  Inquire For Camp
+                <Link href="#register" onClick={() => chooseProgram('summer_camp')} className="btn btn-sm btn-sun">
+                  Register For Camp
                 </Link>
               </div>
             </div>
+          </div>
+          <div className="md:col-span-2 bg-deep text-white p-6 md:p-8 card-cut flex flex-col md:flex-row gap-5 justify-between md:items-center">
+            <div><p className="eyebrow text-aqua">One-to-one coaching</p><h3 className="font-extrabold uppercase text-2xl md:text-3xl">Private Coaching</h3><p className="text-foam/80 mt-2">Focused sessions built around confidence, technique, or performance goals.</p></div>
+            <Link href="#register" onClick={() => chooseProgram('private_coaching')} className="btn btn-sun shrink-0">Register Interest</Link>
           </div>
         </div>
       </div>

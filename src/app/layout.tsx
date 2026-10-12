@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Saira_Condensed, Figtree } from 'next/font/google';
 import './globals.css';
+import { CartProvider } from '@/components/CartProvider';
 
 const saira = Saira_Condensed({
   subsets: ['latin'],
@@ -38,7 +39,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${saira.variable} ${figtree.variable}`}>
       <body className="antialiased font-body bg-paper text-ink selection:bg-aqua selection:text-deep">
-        {children}
+        <CartProvider>{children}</CartProvider>
       </body>
     </html>
   );

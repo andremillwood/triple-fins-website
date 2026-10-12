@@ -16,7 +16,7 @@ export const Navbar: React.FC<NavbarProps> = ({ cartCount, onOpenCart }) => {
     <nav className="sticky top-0 z-50 bg-[#07223A]/90 backdrop-blur-md border-b border-aqua/20">
       <div className="wrap flex items-center justify-between h-[66px]">
         {/* Brand Logo */}
-        <Link href="#top" className="flex items-center gap-2">
+        <Link href="/" className="flex items-center gap-2">
           <Image
             src="/brand-assets/TF_Wordmark_C.png"
             alt="Triple Fins Swim Program"
@@ -30,25 +30,25 @@ export const Navbar: React.FC<NavbarProps> = ({ cartCount, onOpenCart }) => {
         {/* Desktop Navigation Links */}
         <div className="hidden md:flex items-center gap-7">
           <Link
-            href="#program"
+            href="/#program"
             className="font-display font-semibold uppercase tracking-wider text-[#CFE6EC] text-[0.96rem] hover:text-aqua transition-colors relative py-1"
           >
             Programs
           </Link>
           <Link
-            href="#shop"
+            href="/shop"
             className="font-display font-semibold uppercase tracking-wider text-[#CFE6EC] text-[0.96rem] hover:text-aqua transition-colors relative py-1"
           >
             Store
           </Link>
           <Link
-            href="#about"
+            href="/#about"
             className="font-display font-semibold uppercase tracking-wider text-[#CFE6EC] text-[0.96rem] hover:text-aqua transition-colors relative py-1"
           >
             About
           </Link>
           <Link
-            href="#contact"
+            href="/#contact"
             className="font-display font-semibold uppercase tracking-wider text-[#CFE6EC] text-[0.96rem] hover:text-aqua transition-colors relative py-1"
           >
             Contact
@@ -111,28 +111,28 @@ export const Navbar: React.FC<NavbarProps> = ({ cartCount, onOpenCart }) => {
       {menuOpen && (
         <div className="md:hidden bg-deep2/95 border-b border-aqua/20 px-6 py-5 flex flex-col gap-4">
           <Link
-            href="#program"
+            href="/#program"
             onClick={() => setMenuOpen(false)}
             className="font-display font-semibold uppercase tracking-wider text-[#CFE6EC] text-lg hover:text-aqua"
           >
             Programs
           </Link>
           <Link
-            href="#shop"
+            href="/shop"
             onClick={() => setMenuOpen(false)}
             className="font-display font-semibold uppercase tracking-wider text-[#CFE6EC] text-lg hover:text-aqua"
           >
             Store
           </Link>
           <Link
-            href="#about"
+            href="/#about"
             onClick={() => setMenuOpen(false)}
             className="font-display font-semibold uppercase tracking-wider text-[#CFE6EC] text-lg hover:text-aqua"
           >
             About
           </Link>
           <Link
-            href="#contact"
+            href="/#contact"
             onClick={() => setMenuOpen(false)}
             className="font-display font-semibold uppercase tracking-wider text-[#CFE6EC] text-lg hover:text-aqua"
           >

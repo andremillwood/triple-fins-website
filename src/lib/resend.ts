@@ -1,5 +1,6 @@
 import { Resend } from 'resend';
-import { InquirySubmission } from '@/types';
+import { InquirySubmission, RegistrationSubmission } from '@/types';
+import { escapeHtml } from '@/lib/validation';
 
 const resendApiKey = process.env.RESEND_API_KEY;
 export const resend = resendApiKey ? new Resend(resendApiKey) : null;
@@ -25,12 +26,12 @@ export async function sendInquiryEmails(inquiry: InquirySubmission) {
         <div style="font-family: Arial, sans-serif; background: #0B2E4E; color: #ffffff; padding: 24px; border-radius: 8px;">
           <h2 style="color: #15D2DB; margin-top: 0;">New Program Enquiry Received</h2>
           <hr style="border: 0; border-top: 1px solid rgba(21, 210, 219, 0.3); margin: 16px 0;" />
-          <p><strong>Name:</strong> ${inquiry.name}</p>
-          <p><strong>Email:</strong> <a href="mailto:${inquiry.email}" style="color: #FFB020;">${inquiry.email}</a></p>
-          <p><strong>Phone:</strong> ${inquiry.phone || 'Not provided'}</p>
-          <p><strong>Program Interest:</strong> ${inquiry.program_interest || 'General'}</p>
+          <p><strong>Name:</strong> ${escapeHtml(inquiry.name)}</p>
+          <p><strong>Email:</strong> ${escapeHtml(inquiry.email)}</p>
+          <p><strong>Phone:</strong> ${escapeHtml(inquiry.phone || 'Not provided')}</p>
+          <p><strong>Program Interest:</strong> ${escapeHtml(inquiry.program_interest || 'General')}</p>
           <div style="background: rgba(255,255,255,0.08); padding: 14px; border-left: 4px solid #15D2DB; border-radius: 4px; margin-top: 14px;">
-            <p style="margin: 0; font-size: 15px; line-height: 1.5; color: #EAF4F6;">${inquiry.message}</p>
+            <p style="margin: 0; font-size: 15px; line-height: 1.5; color: #EAF4F6;">${escapeHtml(inquiry.message)}</p>
           </div>
           <p style="margin-top: 24px; font-size: 12px; color: #9FBFC9;">Triple Fins Swim Program — Russell's Paradise, Yallahs, St. Thomas</p>
         </div>
@@ -49,11 +50,11 @@ export async function sendInquiryEmails(inquiry: InquirySubmission) {
             <p style="color: #FFB020; margin: 6px 0 0 0; font-weight: bold;">Swim Strong. Play Hard. Build Champions.</p>
           </div>
           <div style="padding: 24px; color: #06202F; line-height: 1.6;">
-            <p>Hi <strong>${inquiry.name}</strong>,</p>
+            <p>Hi <strong>${escapeHtml(inquiry.name)}</strong>,</p>
             <p>Thank you for contacting Triple Fins! We have received your inquiry regarding our swim programs and merchandise.</p>
             <div style="background: #EAF4F6; padding: 16px; border-radius: 6px; margin: 16px 0;">
               <p style="margin: 0; font-weight: bold; color: #0B2E4E;">Your message summary:</p>
-              <p style="margin: 8px 0 0; font-style: italic; color: #5D7688;">"${inquiry.message}"</p>
+              <p style="margin: 8px 0 0; font-style: italic; color: #5D7688;">"${escapeHtml(inquiry.message)}"</p>
             </div>
             <p>Our coaching and administrative team will review your message and get back to you shortly.</p>
             <p>In the meantime, feel free to give us a call or visit us during our Sunday sessions:</p>
@@ -72,6 +73,45 @@ export async function sendInquiryEmails(inquiry: InquirySubmission) {
     return { success: true };
   } catch (error) {
     console.error('[Resend Error]', error);
+    return { success: false, error: (error as Error).message };
+  }
+}
+
+export async function sendRegistrationEmails(registration: RegistrationSubmission, id: string) {
+  if (!resend) return { success: false, error: 'Email service is not configured' };
+  const adminEmail = process.env.CONTACT_NOTIFICATION_EMAIL || DEFAULT_ADMIN_EMAIL;
+  const program = registration.program_type.replaceAll('_', ' ');
+  try {
+    await Promise.all([
+      resend.emails.send({
+        from: SENDER_EMAIL, to: adminEmail,
+        subject: `[New Registration] ${registration.participant_name} — ${program}`,
+        html: `<h2>New Triple Fins registration</h2><p><strong>Reference:</strong> ${escapeHtml(id)}</p><p><strong>Swimmer:</strong> ${escapeHtml(registration.participant_name)}</p><p><strong>Guardian:</strong> ${escapeHtml(registration.parent_name || 'N/A')}</p><p><strong>Program:</strong> ${escapeHtml(program)}</p><p><strong>Email:</strong> ${escapeHtml(registration.email)}</p><p><strong>Phone:</strong> ${escapeHtml(registration.phone)}</p><p><strong>Level:</strong> ${escapeHtml(registration.swimming_level)}</p><p><strong>Payment:</strong> ${escapeHtml(registration.payment_method)}</p>`,
+      }),
+      resend.emails.send({
+        from: SENDER_EMAIL, to: registration.email,
+        subject: 'Your Triple Fins registration is saved',
+        html: `<h2>Registration received</h2><p>Hi ${escapeHtml(registration.parent_name || registration.participant_name)},</p><p>We saved the registration for <strong>${escapeHtml(registration.participant_name)}</strong>. Your reference is <strong>${escapeHtml(id)}</strong>.</p><p>${registration.payment_method === 'stripe' ? 'Continue to Stripe Checkout to complete payment. Your place is not marked paid until Stripe confirms it.' : 'Our team will follow up with payment details or confirmation.'}</p>`,
+      }),
+    ]);
+    return { success: true };
+  } catch (error) {
+    console.error('[Registration email error]', error);
+    return { success: false, error: (error as Error).message };
+  }
+}
+
+export async function sendOrderEmails(order: { id: string; customer_name: string; email: string; subtotal_jmd: number; payment_method: string; receiptUrl?: string }) {
+  if (!resend) return { success: false, error: 'Email service is not configured' };
+  const adminEmail = process.env.CONTACT_NOTIFICATION_EMAIL || DEFAULT_ADMIN_EMAIL;
+  try {
+    const results = await Promise.all([
+      resend.emails.send({ from: SENDER_EMAIL, to: adminEmail, subject: `[New Order] ${order.id}`, html: `<p>New order from ${escapeHtml(order.customer_name)} for JMD $${order.subtotal_jmd.toLocaleString()}.</p>` }),
+      resend.emails.send({ from: SENDER_EMAIL, to: order.email, subject: 'Your Triple Fins order is saved', html: `<p>Hi ${escapeHtml(order.customer_name)}, your order <strong>${escapeHtml(order.id)}</strong> is saved. Merchandise subtotal: JMD $${order.subtotal_jmd.toLocaleString()}.</p><p>Payment method: ${escapeHtml(order.payment_method)}. Saving an order does not confirm payment. Our team will coordinate fulfillment and any delivery fees separately.</p>${order.receiptUrl ? `<p><a href="${escapeHtml(order.receiptUrl)}">View your private order receipt and status</a></p>` : ''}` }),
+    ]);
+    if (results.some(result => result.error)) return { success: false, error: 'Email provider rejected a confirmation' };
+    return { success: true };
+  } catch (error) {
     return { success: false, error: (error as Error).message };
   }
 }

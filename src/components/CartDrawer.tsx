@@ -2,14 +2,15 @@
 
 import React, { useState } from 'react';
 import Image from 'next/image';
+import { canOrder, cartSubtotal, money } from '@/lib/catalogue';
 import { CartItem } from '@/types';
 
 interface CartDrawerProps {
   isOpen: boolean;
   onClose: () => void;
   cart: CartItem[];
-  onUpdateQuantity: (index: number, delta: number) => void;
-  onRemoveItem: (index: number) => void;
+  onUpdateQuantity: (index: string, delta: number) => void;
+  onRemoveItem: (index: string) => void;
 }
 
 export const CartDrawer: React.FC<CartDrawerProps> = ({
@@ -20,24 +21,38 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
   onRemoveItem,
 }) => {
   const [checkoutMessage, setCheckoutMessage] = useState<string | null>(null);
+  const [checkoutOpen, setCheckoutOpen] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [stripeEnabled, setStripeEnabled] = useState(false);
+  const [details, setDetails] = useState({ customer_name: '', email: '', phone: '', payment_method: 'pay_on_pickup', fulfillment_method: 'pickup' });
 
   if (!isOpen) return null;
 
-  const subtotal = cart.reduce(
-    (acc, item) => acc + item.product.p * item.quantity,
-    0
-  );
+  const subtotal = cartSubtotal(cart);
 
   const totalCount = cart.reduce((acc, item) => acc + item.quantity, 0);
 
-  const handleCheckout = () => {
-    if (cart.length === 0) {
+  const handleCheckout = async (event?: React.FormEvent) => {
+    event?.preventDefault();
+    if (cart.length === 0 || cart.some(item => !canOrder(item.product))) {
       setCheckoutMessage('Your cart is empty. Add an item before checking out.');
       return;
     }
-    setCheckoutMessage(
-      'Checkout is in preview mode. To place order inquiries or arrange pickup at Russell’s Paradise, please send an enquiry below or call +1 (876) 801-7907.'
-    );
+    if (!checkoutOpen) {
+      setCheckoutOpen(true);
+      fetch('/api/config').then((r) => r.json()).then((data) => setStripeEnabled(Boolean(data.stripeEnabled))).catch(() => {});
+      fetch('/api/analytics', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event_name: 'order_started' }) }).catch(() => {});
+      return;
+    }
+    setSubmitting(true); setCheckoutMessage(null);
+    try {
+      const response = await fetch('/api/orders', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...details, items: cart.map((item) => ({ product_id: item.product.id, quantity: item.quantity })) }) });
+      const result = await response.json();
+      if (!response.ok || !result.success) throw new Error(result.error || 'Order could not be placed.');
+      if (result.data.checkoutUrl) { window.location.assign(result.data.checkoutUrl); return; }
+      setCheckoutMessage(result.data.checkoutError || `${result.message} Reference: ${result.data.id}`);
+    } catch (error) { setCheckoutMessage(error instanceof Error ? error.message : 'Order could not be placed.'); }
+    finally { setSubmitting(false); }
   };
 
   return (
@@ -109,7 +124,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                     {item.product.n}
                   </h4>
                   <p className="font-display font-bold text-aqua-deep text-sm">
-                    JMD ${(item.product.p * item.quantity).toLocaleString()}
+                    {money(item.product.p === null ? null : item.product.p * item.quantity)}
                   </p>
 
                   {/* Qty controls */}
@@ -152,16 +167,19 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
               Estimated Subtotal
             </span>
             <span className="font-display font-extrabold text-2xl text-deep">
-              JMD ${subtotal.toLocaleString()}
+              {money(subtotal)}
             </span>
           </div>
 
-          <button
-            onClick={handleCheckout}
-            className="btn btn-sun w-full justify-center py-3 text-lg"
-          >
-            Proceed to Checkout
-          </button>
+          {checkoutOpen && <form onSubmit={handleCheckout} className="grid gap-2 mb-3">
+            <input required aria-label="Customer name" placeholder="Your name" className="px-3 py-2 border border-line" value={details.customer_name} onChange={(e) => setDetails({ ...details, customer_name: e.target.value })} />
+            <input required type="email" aria-label="Email" placeholder="Email" className="px-3 py-2 border border-line" value={details.email} onChange={(e) => setDetails({ ...details, email: e.target.value })} />
+            <input required aria-label="Phone or WhatsApp" placeholder="Phone / WhatsApp" className="px-3 py-2 border border-line" value={details.phone} onChange={(e) => setDetails({ ...details, phone: e.target.value })} />
+            <select aria-label="Payment method" className="px-3 py-2 border border-line" value={details.payment_method} onChange={(e) => setDetails({ ...details, payment_method: e.target.value })}>{stripeEnabled && <option value="stripe">Pay online with Stripe</option>}<option value="bank_transfer">Bank transfer / manual verification</option><option value="pay_on_pickup">Pay on pickup</option></select>
+            <select aria-label="Fulfillment method" className="px-3 py-2 border border-line" value={details.fulfillment_method} onChange={(e) => setDetails({ ...details, fulfillment_method: e.target.value })}><option value="pickup">Pickup</option><option value="delivery_coordination">Request delivery coordination</option></select>
+            <button disabled={submitting} className="btn btn-sun w-full justify-center py-3 text-lg">{submitting ? 'Saving order…' : details.payment_method === 'stripe' ? 'Place Order & Pay' : 'Place Order'}</button>
+          </form>}
+          {!checkoutOpen && <button onClick={() => handleCheckout()} className="btn btn-sun w-full justify-center py-3 text-lg">Proceed to Checkout</button>}
 
           {checkoutMessage && (
             <div className="mt-3 p-3 bg-white border border-aqua/30 rounded-sm text-xs text-deep leading-relaxed">
