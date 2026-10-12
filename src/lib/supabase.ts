@@ -13,6 +13,8 @@ export const supabase = supabaseUrl && supabaseAnonKey
 export const getServiceSupabase = () => {
   if (supabaseUrl && supabaseServiceKey) {
     return createClient(supabaseUrl, supabaseServiceKey, {
+      // Catalogue approvals, availability and order state must always be current.
+      global: { fetch: (input, init) => fetch(input, { ...init, cache: 'no-store' }) },
       auth: {
         persistSession: false,
         autoRefreshToken: false,
