@@ -11,5 +11,5 @@ import { RegistrationForm } from '@/components/RegistrationForm';
 import { useCart } from '@/components/CartProvider';
 export default function Home() {
   const { cart } = useCart(); const router = useRouter();
-  return <main className="min-h-screen flex flex-col bg-paper"><Navbar cartCount={cart.reduce((sum, item) => sum + item.quantity, 0)} onOpenCart={() => router.push('/cart')} /><Hero /><Programs /><RegistrationForm /><Shop /><About /><Contact /><Footer /></main>;
+  return <><Navbar cartCount={cart.reduce((sum, item) => sum + item.quantity, 0)} onOpenCart={() => router.push('/cart')} /><main id="main-content" className="min-h-screen bg-paper"><Hero /><Shop featured /><Programs /><RegistrationForm /><About /><Contact /></main><Footer /></>;
 }
