@@ -1,0 +1,464 @@
+[
+  {
+    "sku": "TF-SW-01",
+    "name": "Girls training one-piece",
+    "category": "Swimwear",
+    "tier": "athlete",
+    "phase": "Core"
+  },
+  {
+    "sku": "TF-SW-02",
+    "name": "Boys training jammer",
+    "category": "Swimwear",
+    "tier": "athlete",
+    "phase": "Core"
+  },
+  {
+    "sku": "TF-SW-03",
+    "name": "Boys training brief",
+    "category": "Swimwear",
+    "tier": "athlete",
+    "phase": "Core"
+  },
+  {
+    "sku": "TF-SW-04",
+    "name": "Kids long-sleeve rash guard",
+    "category": "Swimwear",
+    "tier": "athlete",
+    "phase": "Core"
+  },
+  {
+    "sku": "TF-SW-05",
+    "name": "Toddler swim nappy",
+    "category": "Swimwear",
+    "tier": "athlete",
+    "phase": "Core"
+  },
+  {
+    "sku": "TF-SW-06",
+    "name": "Toddler sun suit",
+    "category": "Swimwear",
+    "tier": "athlete",
+    "phase": "Phase 2"
+  },
+  {
+    "sku": "TF-SW-07",
+    "name": "Kids board shorts",
+    "category": "Swimwear",
+    "tier": "athlete",
+    "phase": "Core"
+  },
+  {
+    "sku": "TF-SW-08",
+    "name": "Women's training one-piece",
+    "category": "Swimwear",
+    "tier": "supporter",
+    "phase": "Core"
+  },
+  {
+    "sku": "TF-SW-09",
+    "name": "Women's lifestyle swimwear",
+    "category": "Swimwear",
+    "tier": "supporter",
+    "phase": "Phase 2"
+  },
+  {
+    "sku": "TF-SW-10",
+    "name": "Men's training jammer",
+    "category": "Swimwear",
+    "tier": "supporter",
+    "phase": "Core"
+  },
+  {
+    "sku": "TF-SW-11",
+    "name": "Men's training brief",
+    "category": "Swimwear",
+    "tier": "supporter",
+    "phase": "Phase 2"
+  },
+  {
+    "sku": "TF-SW-12",
+    "name": "Men's swim shorts",
+    "category": "Swimwear",
+    "tier": "supporter",
+    "phase": "Core"
+  },
+  {
+    "sku": "TF-SW-13",
+    "name": "Adult long-sleeve rash guard",
+    "category": "Swimwear",
+    "tier": "supporter",
+    "phase": "Core"
+  },
+  {
+    "sku": "TF-SW-14",
+    "name": "Competition suit",
+    "category": "Swimwear",
+    "tier": "athlete",
+    "phase": "Phase 2"
+  },
+  {
+    "sku": "TF-CP-01",
+    "name": "Junior swim cap",
+    "category": "Caps",
+    "tier": "athlete",
+    "phase": "Core"
+  },
+  {
+    "sku": "TF-CP-02",
+    "name": "Adult swim cap",
+    "category": "Caps",
+    "tier": "supporter",
+    "phase": "Core"
+  },
+  {
+    "sku": "TF-CP-03",
+    "name": "Long-hair swim cap",
+    "category": "Caps",
+    "tier": "supporter",
+    "phase": "Core"
+  },
+  {
+    "sku": "TF-CP-04",
+    "name": "Team swim cap",
+    "category": "Caps",
+    "tier": "athlete",
+    "phase": "Core"
+  },
+  {
+    "sku": "TF-CP-05",
+    "name": "Learn-to-swim cap",
+    "category": "Caps",
+    "tier": "athlete",
+    "phase": "Core"
+  },
+  {
+    "sku": "TF-CP-06",
+    "name": "Race cap",
+    "category": "Caps",
+    "tier": "athlete",
+    "phase": "Phase 2"
+  },
+  {
+    "sku": "TF-GG-01",
+    "name": "Kids goggles",
+    "category": "Goggles",
+    "tier": "athlete",
+    "phase": "Core"
+  },
+  {
+    "sku": "TF-GG-02",
+    "name": "Junior training goggles",
+    "category": "Goggles",
+    "tier": "athlete",
+    "phase": "Core"
+  },
+  {
+    "sku": "TF-GG-03",
+    "name": "Adult training goggles",
+    "category": "Goggles",
+    "tier": "supporter",
+    "phase": "Core"
+  },
+  {
+    "sku": "TF-GG-04",
+    "name": "Race goggles",
+    "category": "Goggles",
+    "tier": "supporter",
+    "phase": "Phase 2"
+  },
+  {
+    "sku": "TF-GG-05",
+    "name": "Open-water goggles",
+    "category": "Goggles",
+    "tier": "supporter",
+    "phase": "Core"
+  },
+  {
+    "sku": "TF-GG-06",
+    "name": "Goggle case",
+    "category": "Goggles",
+    "tier": "everyday",
+    "phase": "Core"
+  },
+  {
+    "sku": "TF-TE-01",
+    "name": "Kickboard",
+    "category": "Training Equipment",
+    "tier": "everyday",
+    "phase": "Core"
+  },
+  {
+    "sku": "TF-TE-02",
+    "name": "Pull buoy",
+    "category": "Training Equipment",
+    "tier": "everyday",
+    "phase": "Core"
+  },
+  {
+    "sku": "TF-TE-03",
+    "name": "Hand paddles",
+    "category": "Training Equipment",
+    "tier": "everyday",
+    "phase": "Core"
+  },
+  {
+    "sku": "TF-TE-04",
+    "name": "Short-blade training fins",
+    "category": "Training Equipment",
+    "tier": "everyday",
+    "phase": "Core"
+  },
+  {
+    "sku": "TF-TE-05",
+    "name": "Kids long fins",
+    "category": "Training Equipment",
+    "tier": "athlete",
+    "phase": "Phase 2"
+  },
+  {
+    "sku": "TF-TE-06",
+    "name": "Training snorkel",
+    "category": "Training Equipment",
+    "tier": "everyday",
+    "phase": "Phase 2"
+  },
+  {
+    "sku": "TF-TE-07",
+    "name": "Nose clip",
+    "category": "Training Equipment",
+    "tier": "everyday",
+    "phase": "Core"
+  },
+  {
+    "sku": "TF-TE-08",
+    "name": "Ear plugs",
+    "category": "Training Equipment",
+    "tier": "everyday",
+    "phase": "Core"
+  },
+  {
+    "sku": "TF-TE-09",
+    "name": "Resistance training equipment",
+    "category": "Training Equipment",
+    "tier": "everyday",
+    "phase": "Phase 2"
+  },
+  {
+    "sku": "TF-TE-10",
+    "name": "Stretch cords",
+    "category": "Training Equipment",
+    "tier": "everyday",
+    "phase": "Phase 2"
+  },
+  {
+    "sku": "TF-TE-11",
+    "name": "Mesh equipment bag",
+    "category": "Training Equipment",
+    "tier": "everyday",
+    "phase": "Core"
+  },
+  {
+    "sku": "TF-LS-01",
+    "name": "Kids swim vest",
+    "category": "Learn-to-Swim",
+    "tier": "athlete",
+    "phase": "Phase 2"
+  },
+  {
+    "sku": "TF-LS-02",
+    "name": "Arm bands",
+    "category": "Learn-to-Swim",
+    "tier": "athlete",
+    "phase": "Phase 2"
+  },
+  {
+    "sku": "TF-LS-03",
+    "name": "Dive toys set",
+    "category": "Learn-to-Swim",
+    "tier": "athlete",
+    "phase": "Core"
+  },
+  {
+    "sku": "TF-LS-04",
+    "name": "Swim noodle",
+    "category": "Learn-to-Swim",
+    "tier": "everyday",
+    "phase": "Phase 2"
+  },
+  {
+    "sku": "TF-LS-05",
+    "name": "Tow buoy",
+    "category": "Learn-to-Swim",
+    "tier": "everyday",
+    "phase": "Core"
+  },
+  {
+    "sku": "TF-TR-01",
+    "name": "Sports towel",
+    "category": "Towels & Robes",
+    "tier": "everyday",
+    "phase": "Core"
+  },
+  {
+    "sku": "TF-TR-02",
+    "name": "Beach towel",
+    "category": "Towels & Robes",
+    "tier": "everyday",
+    "phase": "Core"
+  },
+  {
+    "sku": "TF-TR-03",
+    "name": "Kids poncho towel",
+    "category": "Towels & Robes",
+    "tier": "athlete",
+    "phase": "Core"
+  },
+  {
+    "sku": "TF-TR-04",
+    "name": "Adult changing robe",
+    "category": "Towels & Robes",
+    "tier": "supporter",
+    "phase": "Phase 2"
+  },
+  {
+    "sku": "TF-BG-01",
+    "name": "Swim backpack",
+    "category": "Bags",
+    "tier": "everyday",
+    "phase": "Core"
+  },
+  {
+    "sku": "TF-BG-02",
+    "name": "Drawstring swim bag",
+    "category": "Bags",
+    "tier": "everyday",
+    "phase": "Core"
+  },
+  {
+    "sku": "TF-BG-03",
+    "name": "Wet/dry pouch",
+    "category": "Bags",
+    "tier": "everyday",
+    "phase": "Core"
+  },
+  {
+    "sku": "TF-BG-04",
+    "name": "Phone pouch",
+    "category": "Bags",
+    "tier": "everyday",
+    "phase": "Phase 2"
+  },
+  {
+    "sku": "TF-AP-01",
+    "name": "Team T-shirt",
+    "category": "Supporter Apparel",
+    "tier": "supporter",
+    "phase": "Core"
+  },
+  {
+    "sku": "TF-AP-02",
+    "name": "Supporter T-shirt",
+    "category": "Supporter Apparel",
+    "tier": "supporter",
+    "phase": "Core"
+  },
+  {
+    "sku": "TF-AP-03",
+    "name": "Long-sleeve shirt",
+    "category": "Supporter Apparel",
+    "tier": "supporter",
+    "phase": "Core"
+  },
+  {
+    "sku": "TF-AP-04",
+    "name": "Lightweight hoodie",
+    "category": "Supporter Apparel",
+    "tier": "supporter",
+    "phase": "Phase 2"
+  },
+  {
+    "sku": "TF-AP-05",
+    "name": "Coach polo",
+    "category": "Supporter Apparel",
+    "tier": "supporter",
+    "phase": "Phase 2"
+  },
+  {
+    "sku": "TF-HF-01",
+    "name": "Bucket hat",
+    "category": "Headwear & Footwear",
+    "tier": "everyday",
+    "phase": "Core"
+  },
+  {
+    "sku": "TF-HF-02",
+    "name": "Baseball cap",
+    "category": "Headwear & Footwear",
+    "tier": "everyday",
+    "phase": "Core"
+  },
+  {
+    "sku": "TF-HF-03",
+    "name": "Pool slides",
+    "category": "Headwear & Footwear",
+    "tier": "everyday",
+    "phase": "Core"
+  },
+  {
+    "sku": "TF-HF-04",
+    "name": "Flip-flops",
+    "category": "Headwear & Footwear",
+    "tier": "everyday",
+    "phase": "Phase 2"
+  },
+  {
+    "sku": "TF-SC-01",
+    "name": "Swim shampoo and body wash",
+    "category": "Swim Care",
+    "tier": "everyday",
+    "phase": "Phase 2"
+  },
+  {
+    "sku": "TF-SC-02",
+    "name": "Goggle care spray",
+    "category": "Swim Care",
+    "tier": "everyday",
+    "phase": "Core"
+  },
+  {
+    "sku": "TF-SC-03",
+    "name": "Sunscreen",
+    "category": "Swim Care",
+    "tier": "everyday",
+    "phase": "Phase 2"
+  },
+  {
+    "sku": "TF-AC-01",
+    "name": "Water bottle",
+    "category": "Accessories",
+    "tier": "everyday",
+    "phase": "Core"
+  },
+  {
+    "sku": "TF-AC-02",
+    "name": "Sticker and patch pack",
+    "category": "Accessories",
+    "tier": "everyday",
+    "phase": "Core"
+  },
+  {
+    "sku": "TF-AC-03",
+    "name": "Keyring and bag tag",
+    "category": "Accessories",
+    "tier": "everyday",
+    "phase": "Core"
+  },
+  {
+    "sku": "TF-AC-04",
+    "name": "Lanyard and ID holder",
+    "category": "Accessories",
+    "tier": "everyday",
+    "phase": "Phase 2"
+  }
+]

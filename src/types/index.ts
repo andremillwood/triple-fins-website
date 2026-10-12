@@ -7,7 +7,9 @@ export interface Product {
   n: string; // name
   cat: string; // category
   tier: ProductTier;
-  p: number; // price in JMD
+  p: number | null; // null means price pending, never free
+  phase?: 'Core' | 'Phase 2' | 'Drop' | null;
+  orderable?: boolean;
   image?: string;
   images?: string[];
   description?: string;

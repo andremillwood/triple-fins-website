@@ -42,3 +42,11 @@ it('does not offer unconfigured Stripe payment', async () => {
   expect((await POST(request({payment_method:'stripe'}))).status).toBe(400);
   expect(mocks.rpc).not.toHaveBeenCalled();
 });
+it('rejects planned/unapproved stale or forged requests without sending messages', async () => {
+  mocks.rpc.mockResolvedValue({data:null,error:{code:'P0001',message:'This product is planned or not approved for ordering.'}});
+  const response=await POST(request({items:[{...payload.items[0],price_jmd:1,availability:'available',public_content_approved:true,variants_approved:true}]}));
+  expect(response.status).toBe(409);
+  expect(mocks.rpc.mock.calls[0][1].p_items).toEqual(payload.items);
+  expect(mocks.email).not.toHaveBeenCalled();
+  expect(mocks.read).not.toHaveBeenCalled();
+});

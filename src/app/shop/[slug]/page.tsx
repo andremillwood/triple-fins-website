@@ -5,7 +5,7 @@ import { StoreShell } from '@/components/StoreShell';
 import { ProductGallery } from '@/components/ProductGallery';
 import { ProductCard, useCatalogue } from '@/components/Shop';
 import { useCart } from '@/components/CartProvider';
-import { categorySlug, money } from '@/lib/catalogue';
+import { canOrder, categorySlug, money } from '@/lib/catalogue';
 export default function ProductPage({ params }: { params: { slug: string } }) {
   const { products, loading, error } = useCatalogue(); const { add, ready } = useCart();
   const [size, setSize] = useState(''); const [quantity, setQuantity] = useState(1); const [added, setAdded] = useState(false);
@@ -18,7 +18,7 @@ export default function ProductPage({ params }: { params: { slug: string } }) {
         <ProductGallery large name={product.n} images={product.images?.length ? product.images : ['/brand-assets/TF_Logo_Dark.png']} />
         <div className="product-detail-panel"><p className="eyebrow">{product.cat} / Triple Fins</p><h1 className="text-4xl md:text-5xl font-extrabold uppercase text-deep mt-3">{product.n}</h1><p className="text-xl font-bold mt-6">{money(product.p)}</p>
           <p className="text-muted mt-6 leading-relaxed">{product.description || 'Represent Triple Fins at training, meets and beyond. Contact the team for product specifications and availability.'}</p>
-          {product.provisional ? <div className="p-5 bg-foam mt-8"><h2 className="font-bold">Collection preview</h2><p className="mt-2">This price is provisional. Ordering will open after the team confirms pricing and availability.</p><Link href="/#contact" className="btn btn-deep mt-4">Ask about this product</Link></div> : <div className="mt-8 space-y-5">
+          {!canOrder(product) ? <div className="p-5 bg-foam mt-8"><h2 className="font-bold">Collection preview</h2><p className="mt-2">Ordering opens after price, availability, sizes and product details are approved.</p><Link href="/#contact" className="btn btn-deep mt-4">Ask about this product</Link></div> : <div className="mt-8 space-y-5">
             {!!product.sizes?.length && <fieldset><legend className="text-sm font-semibold mb-3">Select size{size ? ' — ' + size : ''}</legend><div className="flex flex-wrap gap-2">{product.sizes.map(value => <button key={value} type="button" aria-pressed={size === value} className={'min-w-12 min-h-12 px-4 border ' + (size === value ? 'bg-deep text-white border-deep' : 'border-line')} onClick={() => { setSize(value); setAdded(false); }}>{value}</button>)}</div></fieldset>}
             <label className="block">Quantity<input className="block w-24 border border-line p-3 mt-2" type="number" min="1" max="20" value={quantity} onChange={event => setQuantity(Number(event.target.value))} /></label>
             <button disabled={!ready || (!!product.sizes?.length && !size) || !Number.isInteger(quantity) || quantity < 1 || quantity > 20} className="btn btn-sun w-full disabled:opacity-50" onClick={() => { add(product, size, quantity); setAdded(true); }}>Add to cart</button>

@@ -150,7 +150,7 @@ triple-fins-website/
 
 ## Database migrations and staff setup
 
-Apply migrations with the Supabase CLI (`supabase db push`) or run `supabase/migrations/202609280001_operational_loop.sql` in the SQL editor. The migration adds payment and registration metadata, staff roles, orders, order items, analytics events, indexes, and restrictive RLS policies.
+Production migration application requires explicit approval. For an approved environment, apply migrations in chronological order with the Supabase CLI (`supabase db push`); the first migration is `supabase/migrations/202609280001_operational_loop.sql` in the SQL editor. The migration adds payment and registration metadata, staff roles, orders, order items, analytics events, indexes, and restrictive RLS policies.
 
 Create a staff user in Supabase Auth, then authorize the user using their UUID:
 
@@ -191,9 +191,9 @@ Existing merchandise is preserved.
 
 Prices on these new products are deliberately provisional. They are displayed
 for review, with checkout disabled in both the UI and order API until staff
-approve the price by clearing the provisional-price flag. Descriptions describe
+approve the price by clearing the provisional-price flag. Newly created products also require confirmed availability, approved public content and approved variants. Descriptions describe
 the mockups; material, sizing and performance specifications still need supplier
-confirmation. The current store does not collect size variants.
+confirmation. The store collects configured size variants on product pages, validates them again in the atomic checkout function, and snapshots the selected size on each order line. Empty size lists mean no size applies only after staff approve variants.
 
 Web image copies total under 1 MB. Rebuild them with
 `node scripts/prepare-product-images.cjs "/path/to/Apparel Mockups"`.
@@ -211,3 +211,27 @@ npm run build
 ```
 
 *A Point Global Marketing initiative · Swim Strong. Play Hard. Build Champions.*
+
+
+## Supplier catalogue review (Javette workbook)
+
+See [catalogue review and import instructions](docs/catalogue-review.md). The importer
+prepares 66 distinct planned SKUs without replacing the 16 seed or 12 mockup products.
+Core previews are visible; Phase 2 is hidden. Neither phase implies stock or approval.
+Unknown prices display as **Price pending**, never zero/free. All new rows remain
+non-orderable until price, availability/fulfilment, variants and public content are approved.
+Supplier/commercial data lives in `catalogue_private`, with no anonymous or browser
+staff privileges. Never place it in `public.products`, descriptions or client code.
+
+The catalogue migration preserves existing products' prior purchase eligibility;
+legacy approval defaults are compatibility flags, not new supplier certifications.
+Existing provisional prices are still rejected. Stripe and production readiness
+remain separate work and are not certified by this catalogue change.
+
+Additional isolated database verification (Docker required):
+
+```bash
+node scripts/test-catalogue-db.mjs
+# Optional: validate the actual source without committing or printing it
+node scripts/test-catalogue-db.mjs /private/workbook.json
+```

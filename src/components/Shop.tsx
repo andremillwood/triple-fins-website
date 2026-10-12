@@ -4,7 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Search, ArrowUpRight, SlidersHorizontal, Plus } from 'lucide-react';
 import { Product } from '@/types';
-import { categorySlug, mapProduct, money } from '@/lib/catalogue';
+import { canOrder, categorySlug, mapProduct, money } from '@/lib/catalogue';
 import { browseProducts } from '@/lib/storefront';
 import { useCart } from './CartProvider';
 export function useCatalogue() {
@@ -21,11 +21,11 @@ export function ProductCard({ product }: { product: Product }) {
   return <article className="retail-product">
     <Link href={href} className="retail-product-visual"><Image src={product.images?.[0] || '/brand-assets/TF_Logo_Dark.png'} alt={product.n} fill sizes="(max-width:640px) 50vw,(max-width:1024px) 33vw,25vw" className="product-primary object-contain" />
       {!!product.images?.[1] && <Image src={product.images[1]} alt="" fill sizes="(max-width:640px) 50vw,(max-width:1024px) 33vw,25vw" className="product-alternate object-contain" />}
-      <span className={'product-tag ' + (product.provisional ? 'is-preview' : '')}>{product.provisional ? 'Collection preview' : 'Shop the collection'}</span>
+      <span className={'product-tag ' + (!canOrder(product) ? 'is-preview' : '')}>{!canOrder(product) ? 'Collection preview' : 'Shop the collection'}</span>
       <span className="product-view">Explore product <ArrowUpRight size={17} aria-hidden="true" /></span>
     </Link>
     <div className="retail-product-info"><p className="product-category">{product.cat}</p><h3><Link href={href}>{product.n}</Link></h3><p className="product-price">{money(product.p)}</p>
-      {product.provisional ? <p className="product-note">Provisional price · ordering coming soon</p> : product.sizes?.length ? <Link className="quick-add" href={href}>Choose size <Plus size={15} aria-hidden="true" /></Link> : <button className="quick-add" disabled={!ready || !product.id} onClick={() => { add(product); setAdded(true); }}>Quick add <Plus size={15} aria-hidden="true" /></button>}
+      {!canOrder(product) ? <p className="product-note">{product.p === null ? 'Price and availability pending' : product.provisional ? 'Provisional price · preview only' : 'Planned collection · availability pending'}</p> : product.sizes?.length ? <Link className="quick-add" href={href}>Choose size <Plus size={15} aria-hidden="true" /></Link> : <button className="quick-add" disabled={!ready || !product.id} onClick={() => { add(product); setAdded(true); }}>Quick add <Plus size={15} aria-hidden="true" /></button>}
       {added && <p role="status" className="text-sm mt-2">Added. <Link href="/cart" className="underline">View cart</Link></p>}
     </div>
   </article>;
